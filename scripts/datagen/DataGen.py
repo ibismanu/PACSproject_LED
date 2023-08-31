@@ -4,6 +4,8 @@ import scipy as sp
 import matplotlib.pyplot as plt
 import numbers
 import utils
+import sys
+import warnings
 
 #elenco idee
     #i parametri della simulazione in un file
@@ -110,14 +112,16 @@ class RungeKutta(DataGen):
         
         
         is_valid_b = np.sum(but_b)==1
-        is_valid_c = np.array_equal(np.array([np.sum(row) for row in but_A]),but_c)
+        #is_valid_c = np.array_equal(np.array([np.sum(row) for row in but_A]),but_c)
+        is_valid_c = sum(np.abs(np.array([np.sum(row) for row in but_A])-but_c))<2*len(but_c)*sys.float_info.epsilon
         len_b = len(but_b)
         size_A = but_A.shape
         
         self.s = len(but_c)
         
-        assert is_valid_b and is_valid_c and len_b==self.s and\
-            size_A[0] == self.s and size_A[1] == self.s, "invalid butcher array"
+        assert is_valid_b, "invalid b component of butcher array"
+        assert is_valid_c, "invalid c component of butcher array"
+        assert len_b==self.s and size_A[0] == self.s and size_A[1] == self.s, "sizesnot compatible"
         
         self.but_b = but_b
         self.but_c = but_c
@@ -147,6 +151,7 @@ class RK_explicit(RungeKutta):
     def generatePDE(self):
         return 1
     
+    #TODO: sistemarel'uso di k in R^2
     def generateODE(self):
         for n in range(self.numIT-1):
             k = np.zeros((self.s,len(self.u[:,0])))
@@ -160,17 +165,93 @@ class RK_explicit(RungeKutta):
      
 #class RK_semi_implicit(RungeKutta):
         
-#class RK_implicit(RungeKutta):
+class RK_implicit(RungeKutta):
+    def __init__(self, T, dt, u0, but_A, but_b, but_c, M=None,A=None,F=None,f=None, eqtype=""):
+        super().__init__(T=T,dt=dt,u0=u0,but_A=but_A,but_b=but_b,but_c=but_c,M=M,A=A,F=F,f=f,eqtype=eqtype)
+        
+        is_expl_A = np.array_equal(but_A, np.tril(but_A,-1))
+        is_semi_A = np.array_equal(but_A, np.tril(but_A))
+        if is_expl_A:
+            warnings.warn("implicit method called but explicit butcher array given")
+        elif is_semi_A:
+            warnings.warn("implicit method called but semi-implicit butcher array given")
+        self.but_A = but_A
     
-#class RK23
-#     def __init__(self):
-#         but = ...
-#         super().__init__(but)
-         
-#class RK4(  ):
-   
+    def generate(self):
+        if self.eqtype=="ODE":
+            return self.generateODE()
+        elif self.eqtype=="PDE":
+            return self.generatePDE()
+    
+    def generatePDE(self):
+        return 1
+    
+    def generateODE(self):
+        size = np.mean(np.abs(self.u0))
+        for n in range(self.numIT-1):
+            k = np.zeros((self.s,len(self.u[:,0])))
+            
+            def g(v):
+                res = np.zeros((self.s,len(self.u[:,0])))
+                for i in range(self.s):
+                    res[i] = v[i,:] - self.f(self.u[:,n]+self.dt*np.dot(self.but_A[i,:],v),\
+                                    self.times[n]+self.but_c[i]*self.dt)
+                        
+            k_temp = sp.optimize.fixedpoint(g,x0=np.zeros(k.shape),xtol=size)
+            k = sp.optimize.newton(g,x0=k_temp,tol=size*1e-2)
+            self.u[:,n+1] = self.u[:,n]+self.dt*np.dot(self.but_b,k)
+            size = np.mean(np.abs(self.u[:,k]))
+    
+    
+    
+class RKHeun(RK_explicit):
+     def __init__(self, T, dt, u0, M=None,A=None,F=None,f=None, eqtype=""):
+         but_A = np.array([[0,0],[1,0]],dtype=float)
+         but_b = np.array([0.5,0.5],dtype=float)
+         but_c = np.array([0,1],dtype=float)
+         super().__init__(T=T,dt=dt,u0=u0,but_A=but_A,but_b=but_b,but_c=but_c,M=M,A=A,F=F,f=f,eqtype=eqtype)
 
-#solver = RK23
+class RKRalston(RK_explicit):
+     def __init__(self, T, dt, u0, M=None,A=None,F=None,f=None, eqtype=""):
+         but_A = np.array([[0,0],[2,0]],dtype=float)/3
+         but_b = np.array([1,3],dtype=float)/4
+         but_c = np.array([0,2],dtype=float)/3
+         super().__init__(T=T,dt=dt,u0=u0,but_A=but_A,but_b=but_b,but_c=but_c,M=M,A=A,F=F,f=f,eqtype=eqtype)
+         
+class RK4(RK_explicit):
+    def __init__(self, T, dt, u0, M=None,A=None,F=None,f=None, eqtype=""):
+        but_A = np.array([[0,0,0,0],[1,0,0,0],[-1,3,0,0],[3,-3,3,0]],dtype=float)/3
+        but_b = np.array([1,3,3,1],dtype=float)/8
+        but_c = np.array([0,1,2,3],dtype=float)/3
+        #print(np.array([np.sum(row) for row in but_A]))
+        #print(but_c)
+        #print(np.array_equal(np.array([np.sum(row) for row in but_A]),but_c))
+        super().__init__(T=T,dt=dt,u0=u0,but_A=but_A,but_b=but_b,but_c=but_c,M=M,A=A,F=F,f=f,eqtype=eqtype)
+
+class RK45(RK_explicit):
+    
+    but_b_star : np.array
+    
+    def __init__(self, T, dt, u0, M=None,A=None,F=None,f=None, eqtype=""):
+        but_A = np.array([],dtype=float)
+        but_b = np.array([],dtype=float)
+        but_b_star = np.array([],dtype=float)
+        but_c = np.array([],dtype=float)
+        super().__init__(T=T,dt=dt,u0=u0,but_A=but_A,but_b=but_b,but_c=but_c,M=M,A=A,F=F,f=f,eqtype=eqtype)
+        self.but_b_star = but_b_star
+    
+    def generate(self):
+        if self.eqtype=="ODE":
+            return self.generateODE()
+        elif self.eqtype=="PDE":
+            return self.generatePDE()
+    
+    def generatePDE(self):
+        return 1
+    
+    def generateODE(self):
+        return 1
+
      
 class ThetaMethod(DataGen):
     def __init__(self, T, dt, u0, M=None,A=None,F=None,f=None, eqtype="", theta=0):

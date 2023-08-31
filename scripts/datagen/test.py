@@ -1,5 +1,6 @@
 from DataGen import ThetaMethod
 from DataGen import RK_explicit
+import DataGen
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -64,17 +65,27 @@ f = lambda v,t : np.array([-v[1],v[0]])
 u_ex = lambda t: np.cos(t)-np.sin(t)
 v_ex = lambda t: np.cos(t)+np.sin(t)
 
-solver = RK_explicit(T=T,dt=dt,u0=u0, but_A=but_A,but_b=but_b,but_c=but_c, f=f,eqtype='ODE')   
+#solver = RK_explicit(T=T,dt=dt,u0=u0, but_A=but_A,but_b=but_b,but_c=but_c, f=f,eqtype='ODE')   
+solver = DataGen.RK4(T=T,dt=dt,u0=u0,f=f,eqtype='ODE')
 solver.generate()
-
-print(solver.u)
 
 plt.plot(solver.times,solver.u[0,:])
 plt.plot(solver.times,u_ex(solver.times))
 plt.title("u")
 plt.show()
 
-plt.plot(solver.times,solver.u[1,:])
-plt.plot(solver.times,v_ex(solver.times))
-plt.title("v")
-plt.show()
+#plt.plot(solver.times,solver.u[0,:])
+#plt.plot(solver.times,u_ex(solver.times))
+#plt.title("u")
+#plt.show()
+
+#plt.plot(solver.times,solver.u[1,:])
+#plt.plot(solver.times,v_ex(solver.times))
+#plt.title("v")
+#plt.show()
+
+
+
+
+
+
