@@ -3,6 +3,7 @@ import numpy as np
 import scipy as sp
 import matplotlib.pyplot as plt
 import numbers
+import utils
 
 #elenco idee
     #i parametri della simulazione in un file
@@ -15,7 +16,6 @@ maybe de-generalize to U'=f(u)?
 
 """
 
-#TODO: if f returns a non numpy-array, correct f
 
 
 class DataGen(ABC): #risolve ODE/sistema di ODE
@@ -36,7 +36,7 @@ class DataGen(ABC): #risolve ODE/sistema di ODE
         self.numIT = numIT+1
         self.T = T
         if eqtype == "ODE":
-            self.f = f
+            self.f = utils.to_numpy(f)
             
             if isinstance(u0, numbers.Number):
                 L = 1
@@ -99,15 +99,79 @@ class DataGen(ABC): #risolve ODE/sistema di ODE
 
 #V = DataGen.FromFile("...")
 
+
 class RungeKutta(DataGen):
-    def __init__(self):
-        super().__init__()
+    
+    but_A : np.array
+    but_b : np.array
+    but_c : np.array
+    s : int
+    def __init__(self, T, dt, u0, but_A, but_b, but_c, M=None,A=None,F=None,f=None, eqtype=""):
+        
+        
+        is_valid_b = np.sum(but_b)==1
+        is_valid_c = np.array_equal(np.array([np.sum(row) for row in but_A]),but_c)
+        len_b = len(but_b)
+        size_A = but_A.shape
+        
+        self.s = len(but_c)
+        
+        assert is_valid_b and is_valid_c and len_b==self.s and\
+            size_A[0] == self.s and size_A[1] == self.s, "invalid butcher array"
+        
+        self.but_b = but_b
+        self.but_c = but_c
+
+        
+        super().__init__(T=T,dt=dt,u0=u0,M=M,A=A,F=F,f=f,eqtype=eqtype)
+    
+    @abstractmethod
+    def generate(self):
+        pass
+       
+class RK_explicit(RungeKutta):
+    def __init__(self, T, dt, u0, but_A, but_b, but_c, M=None,A=None,F=None,f=None, eqtype=""):
+        super().__init__(T=T,dt=dt,u0=u0,but_A=but_A,but_b=but_b,but_c=but_c,M=M,A=A,F=F,f=f,eqtype=eqtype)
+        
+        is_valid_A = np.array_equal(but_A, np.tril(but_A,-1))
+        assert is_valid_A==True, "explicit method called but implicit butcher array given"
+        
+        self.but_A = but_A
     
     def generate(self):
+        if self.eqtype=="ODE":
+            return self.generateODE()
+        elif self.eqtype=="PDE":
+            return self.generatePDE()
+    
+    def generatePDE(self):
         return 1
-        #implement Runge Kutta
+    
+    def generateODE(self):
+        for n in range(self.numIT-1):
+            k = np.zeros((self.s,len(self.u[:,0])))
+            for i in range(self.s):
+                k[i,:] = self.f(self.u[:,n]+self.dt*np.dot(self.but_A[i,:],k),\
+                              self.times[n]+self.but_c[i]*self.dt)
+            self.u[:,n+1] = self.u[:,n]+self.dt*np.dot(self.but_b,k)
+            
         
         
+     
+#class RK_semi_implicit(RungeKutta):
+        
+#class RK_implicit(RungeKutta):
+    
+#class RK23
+#     def __init__(self):
+#         but = ...
+#         super().__init__(but)
+         
+#class RK4(  ):
+   
+
+#solver = RK23
+     
 class ThetaMethod(DataGen):
     def __init__(self, T, dt, u0, M=None,A=None,F=None,f=None, eqtype="", theta=0):
         super().__init__(T=T,dt=dt,u0=u0,M=M,A=A,F=F,f=f,eqtype=eqtype)
