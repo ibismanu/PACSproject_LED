@@ -20,8 +20,12 @@ maybe de-generalize to U'=f(u)?
 
 #TODO: rimuovere gli if con @
 #TODO: rimuovere c dagli input di RK
-#TODO: omettere la riga del warning
+#TODO: omettere la riga del warning/migliorarele impostazioni
 #PAGANI: abbiamo usato anderson per RK implicito ma forse non è ottimale, qualche consiglio?
+
+#TODO: RKsemi
+#TODO: multistep
+#TODO: FEM, chiedere a Pagani
 
 class DataGen(ABC): #risolve ODE/sistema di ODE
     # u: numpy vector, contains solution, size (T/dt,N), N being problem size
