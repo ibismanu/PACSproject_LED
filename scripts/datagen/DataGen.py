@@ -18,7 +18,10 @@ maybe de-generalize to U'=f(u)?
 
 """
 
-
+#TODO: rimuovere gli if con @
+#TODO: rimuovere c dagli input di RK
+#TODO: omettere la riga del warning
+#PAGANI: abbiamo usato anderson per RK implicito ma forse non è ottimale, qualche consiglio?
 
 class DataGen(ABC): #risolve ODE/sistema di ODE
     # u: numpy vector, contains solution, size (T/dt,N), N being problem size
@@ -151,16 +154,18 @@ class RK_explicit(RungeKutta):
     def generatePDE(self):
         return 1
     
-    #TODO: sistemarel'uso di k in R^2
     def generateODE(self):
         for n in range(self.numIT-1):
             k = np.zeros((self.s,len(self.u[:,0])))
             for i in range(self.s):
-                k[i,:] = self.f(self.u[:,n]+self.dt*np.dot(self.but_A[i,:],k),\
+                if isinstance(k[i,:],numbers.Number) or len(k[i,:])==1:
+                    k[i,:] = self.f(self.u[:,n]+self.dt*np.dot(self.but_A[i,:],k),\
+                              self.times[n]+self.but_c[i]*self.dt)
+                else:
+                    k[i,:] = self.f(self.u[:,n]+self.dt*(self.but_A[i,:]@k),\
                               self.times[n]+self.but_c[i]*self.dt)
             self.u[:,n+1] = self.u[:,n]+self.dt*np.dot(self.but_b,k)
-            
-        
+                    
         
      
 #class RK_semi_implicit(RungeKutta):
@@ -174,7 +179,7 @@ class RK_implicit(RungeKutta):
         if is_expl_A:
             warnings.warn("implicit method called but explicit butcher array given")
         elif is_semi_A:
-            warnings.warn("implicit method called but semi-implicit butcher array given")
+            warnings.warn("implicit method called but semi-implicit butcher array given")      
         self.but_A = but_A
     
     def generate(self):
@@ -187,20 +192,33 @@ class RK_implicit(RungeKutta):
         return 1
     
     def generateODE(self):
-        size = np.mean(np.abs(self.u0))
+        size = np.mean(np.abs(self.u[:,0]))
         for n in range(self.numIT-1):
             k = np.zeros((self.s,len(self.u[:,0])))
             
-            def g(v):
+            def g(v:np.array):
                 res = np.zeros((self.s,len(self.u[:,0])))
                 for i in range(self.s):
-                    res[i] = v[i,:] - self.f(self.u[:,n]+self.dt*np.dot(self.but_A[i,:],v),\
-                                    self.times[n]+self.but_c[i]*self.dt)
+                    #res[i,:] = v[i,:] - self.f(self.u[:,n]+self.dt*np.dot(self.but_A[i,:],v),\
+                    #                self.times[n]+self.but_c[i]*self.dt)
+                    if isinstance(k[i,:],numbers.Number) or len(k[i,:])==1:
+                        res[i,:] = v[i,:] - self.f(self.u[:,n]+self.dt*np.dot(self.but_A[i,:],v),\
+                                  self.times[n]+self.but_c[i]*self.dt)
+                    else:
+                        res[i,:] = v[i,:] - self.f(self.u[:,n]+self.dt*(self.but_A[i,:]@v),\
+                                  self.times[n]+self.but_c[i]*self.dt)
+                return res
                         
-            k_temp = sp.optimize.fixedpoint(g,x0=np.zeros(k.shape),xtol=size)
+            #k_temp = sp.optimize.fixed_point(g,x0=np.zeros(k.shape),xtol=size)
+            #k = sp.optimize.newton(g,x0=k_temp,tol=size*1e-2)
+            k_temp = sp.optimize.anderson(g,xin=np.zeros(k.shape),f_rtol=1)
             k = sp.optimize.newton(g,x0=k_temp,tol=size*1e-2)
-            self.u[:,n+1] = self.u[:,n]+self.dt*np.dot(self.but_b,k)
-            size = np.mean(np.abs(self.u[:,k]))
+            
+            if isinstance(k[0,:],numbers.Number) or len(k[0,:])==1:
+                self.u[:,n+1] = self.u[:,n]+self.dt*np.dot(self.but_b,k)
+            else:
+                self.u[:,n+1] = self.u[:,n]+self.dt*(self.but_b@k)
+            size = np.mean(np.abs(self.u[:,n]))
     
     
     
