@@ -1,11 +1,14 @@
+import sys
+sys.path.append('..')
+
 from abc import ABC, abstractmethod
 import numpy as np
 import scipy as sp
 import matplotlib.pyplot as plt
 import numbers
-import utils
-import sys
 import warnings
+
+import utilities.utils
 
 # elenco idee
 # i parametri della simulazione in un file
