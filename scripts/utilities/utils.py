@@ -45,3 +45,11 @@ def valid_RK(A, method):  # @TODO add warnings
             A, semi=True), "semi-implicit method called but fully implicit butcher array given"
     elif method == 'implicit':
         pass
+
+
+def integral(g, j, p):
+    deg = (p+1) // 2
+    nodes, weights = np.polynomial.legendre.leggauss(deg=deg)
+    nodes = 0.5*(nodes+1)
+    weights = 0.5 * weights
+    return np.sum(np.array([weights[i] * g(nodes[i], j) for i in range(deg)]))

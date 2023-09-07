@@ -129,7 +129,7 @@ class RK_4(RK_explicit):
 
         super().__init__(T=T, dt=dt, u0=u0, eqtype=eqtype, but_A=but_A,
                          but_b=but_b, but_c=but_c, f=f, M=M, A=A, F=F)
-        
-class RK_45(RK_explicit): #@TODO
+
+
+class RK_45(RK_explicit):  # @TODO
     pass
-    

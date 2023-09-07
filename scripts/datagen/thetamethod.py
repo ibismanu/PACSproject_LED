@@ -21,15 +21,15 @@ class ThetaMethod(DataGen):
 
     def generateODE(self):
 
-        for k in range(self.num_it-1):
-            rhs = self.u[:, k] + self.dt * \
-                (1-self.theta)*self.f(self.u[:, k], self.t[k])
+        for n in range(self.num_it-1):
+            rhs = self.u[:, n] + self.dt * \
+                (1-self.theta)*self.f(self.u[:, n], self.t[n])
 
-            def g(v): return v - self.theta*self.f(v, self.t[k+1])*self.dt - rhs
+            def g(v): return v - self.theta*self.f(v, self.t[n+1])*self.dt - rhs
             
-            size = np.mean(np.abs(self.u[:, k]))
+            size = np.mean(np.abs(self.u[:, n]))
 
-            self.u[:,k+1] = newton(g,x0=self.u[:,k],tol=size*self.tol)
+            self.u[:,n+1] = newton(g,x0=self.u[:,n],tol=size*self.tol)
 
     def generatePDE(self):
         pass

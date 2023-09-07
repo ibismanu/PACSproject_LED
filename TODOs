@@ -1,2 +1,4 @@
 * utils.valid_RK : add warnings
-* add RK_45
+* rungekutta.RK_45
+* multistep.Multistep.generate()
+* multistep.AdamsBashforth.generateODE() remove for and use numpy (dava errore non so perché)
