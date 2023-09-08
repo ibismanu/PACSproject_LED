@@ -1,4 +1,12 @@
-* utils.valid_RK : add warnings
+TODO
+* utils.valid_RK aggiungere warnings
 * rungekutta.RK_45
 * multistep.Multistep.generate()
-* multistep.AdamsBashforth.generateODE() remove for and use numpy (dava errore non so perché)
+* multistep.AdamsBashforth.generateODE() rimuovere for e usare numpy (dava errore non so perché)
+* rungekutta.RK_semiimplicit
+* generatePDE() in tutte le classi
+* multistep.AdamsMoulton
+* multistep.BDF
+* rimuovere but_c dagli input di RK
+* parametri simulazione da file
+* rimuovere vecchio DataGen.py

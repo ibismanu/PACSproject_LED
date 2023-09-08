@@ -45,7 +45,6 @@ class AdamsBashforth(DataGen):
             return self.generatePDE()
 
     def generateODE(self):
-        print(self.mul_b)
         for n in range(self.num_it-1):
             if n < self.order-1:
                 self.u[:, n+1] = self.u[:, n] + self.dt * \
@@ -57,6 +56,14 @@ class AdamsBashforth(DataGen):
                     self.u[:, n+1] += self.dt * self.mul_b[i] * \
                         self.f(self.u[:, n-self.order+1+i],
                                self.t[n-self.order+1+i])
-    
+
     def generatePDE(self):
         pass
+
+
+class AdamsMoulton(DataGen):
+    pass
+
+
+class BDF(DataGen):
+    pass
