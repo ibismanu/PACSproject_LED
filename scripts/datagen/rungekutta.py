@@ -56,7 +56,47 @@ class RK_explicit(RungeKutta):
 
 
 class RK_semiimplicit(RungeKutta):
-    pass
+
+    def __init__(self, T, dt, u0, eqtype, but_A, but_b, but_c, f=None, M=None, A=None, F=None):
+            valid_RK(but_A,'semi')
+            super().__init__(T=T, dt=dt, u0=u0, eqtype=eqtype, but_A=but_A,
+                         but_b=but_b, but_c=but_c, f=f, M=M, A=A, F=F)
+            
+    def generate(self):
+        if self.eqtype == 'ODE':
+            return self.generateODE()
+        elif self.eqtype == 'PDE':
+            return self.generatePDE()
+        
+    def generateODE(self):
+
+        tol = 1e-2
+
+        for n in range(self.num_it-1):
+            k = np.zeros((self.s, len(self.u[:, 0])))
+            size = np.mean(np.abs(self.u[:, n]))
+
+            for i in range(self.s):
+
+                if self.but_A[i,i] != 0:
+                    k[i, :] = self.f(
+                    self.u[:, n]+self.dt*np.dot(self.but_A[i, :], k), self.t[n]+self.but_c[i]*self.dt)
+
+                else:
+                    def g(v):
+                        res = np.zeros((1,len(self.u[:,0])))
+                        res = v - self.f(
+                        self.u[:,n]+self.dt*np.dot(self.but_A[i,:],k),self.t[n]+self.dt*self.but_c[i])
+
+                        return res
+                    
+                    k_tmp = anderson(g, xin=np.zeros(len(self.u[:,0])), f_rtol=1)
+                    k[i,:] = newton(g, x0=k_tmp, tol=size*tol)
+
+            self.u[:, n+1] = self.u[:, n] + self.dt*np.dot(self.but_b, k)
+
+    def generatePDE(self):
+        pass
 
 
 class RK_implicit(RungeKutta):
