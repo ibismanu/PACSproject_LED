@@ -1,6 +1,7 @@
 from datagen import DataGen
 from utilities.utils import integral
 from math import factorial
+from abc import abstractmethod
 
 import numpy as np
 
@@ -15,14 +16,14 @@ class Multistep(DataGen):
         self.mul_b = mul_b
         super().__init__(T=T, dt=dt, u0=u0, eqtype=eqtype, f=f, M=M, A=A, F=F)
 
+    @abstractmethod
     def generate(self):
         pass
 
 
-class AdamsBashforth(DataGen):
+class AdamsBashforth(Multistep):
 
     order: int
-    mul_b: np.array
 
     def __init__(self, T, dt, u0, eqtype, order, f=None, M=None, A=None, F=None):
 
@@ -61,9 +62,9 @@ class AdamsBashforth(DataGen):
         pass
 
 
-class AdamsMoulton(DataGen):
+class AdamsMoulton(Multistep):
     pass
 
 
-class BDF(DataGen):
+class BDF(Multistep):
     pass
