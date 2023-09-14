@@ -1,11 +1,14 @@
 from abc import ABC, abstractmethod
 import numpy as np
 import sys
+import matplotlib.pyplot as plt
 
-sys.path.append('..')
-from utilities import utils
+#sys.path.append('../utilities')
+import utils
+#from utilities import utils
 
 
+#class GenerateParticles
 class DataGen(ABC):
 
     T: int
@@ -22,18 +25,25 @@ class DataGen(ABC):
     F: np.array
 
     eqtype: str
-
+    '''
+    ODE: u'=f(u)
+    
+    PDE: MU'+AU=F 
+    '''
+    
     def __init__(self, T, dt, u0, eqtype, f=None, M=None, A=None, F=None):
 
         self.eqtype = eqtype
         self.dt = dt
         self.T = T
-        self.num_it = int(T // dt)
-
+        self.num_it = int(T / dt)
+        
         if T != self.num_it*dt:
             T = self.num_it*dt
             print('Final time reached: ', T)
-
+        
+        self.num_it = self.num_it+1
+        
         if eqtype == 'ODE':
             if np.isscalar(u0):
                 self.u = np.zeros((1, self.num_it))
@@ -66,11 +76,46 @@ class DataGen(ABC):
 
     @classmethod
     def fromFile(cls, filename):
+        
+        # T = 10
+        # dt = 5
+        # eqtype = 'ODE'
+        
+        # read_line
+        # find "="
+        # symbol = left_of_=
+        # value = right_of_=
+        
+        # if symbol == "T":
+        #     T = value
+        
+        
         pass
 
     @abstractmethod
     def generate(self):
         pass
 
-    def save(self, format):
+    def save(self, format="NPY"):
+        #set directory
+        np.save(self.u)
         pass
+    
+    def plot_solution(self, u_ex=None):
+        
+        if u_ex != None:
+            exact = u_ex(self.t)
+        
+        n_plots = len(self.u[:,0])
+        print(n_plots)
+        fig, axs = plt.subplots(n_plots)
+            
+        for i in range(n_plots):
+            axs[i].plot(self.t,self.u[i,:],label="numerical solution")
+            if u_ex != None:
+                axs[i].plot(self.t,exact[i],linestyle='dashed', label="exact solution")
+            axs[i].set_title('component %f of the solution' %i)
+            axs[i].legend()
+            
+        fig.tight_layout()
+
