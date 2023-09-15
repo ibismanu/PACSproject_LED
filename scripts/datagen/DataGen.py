@@ -1,4 +1,3 @@
-from thetamethod import ThetaMethod
 from GenerateParticle import GenerateParticle
 from abc import ABC, abstractmethod
 import numpy as np
@@ -34,7 +33,7 @@ class DataGen(ABC):
         np.save(self.dataset)
     
 
-class Mitchel_Schaffer(DataGen):
+class Mitchell_Schaeffer(DataGen):
 
     k: float
     alpha: float
@@ -43,12 +42,14 @@ class Mitchel_Schaffer(DataGen):
     gamma: float    
     grid_size: int
     
-    def __init__(self, N_sample, grid_size, solver, k, alpha, eps, I, gamma):
+    def __init__(self, N_sample, grid_size, solver, x0, k, alpha, eps, I, gamma,create_dataset=True):
         self.k=k
         self.alpha=alpha
         self.eps=eps
         self.I=I
         self.gamma=gamma
+        self.x0=x0
+        self.create_dataset=create_dataset
         
         self.solver=solver
         
@@ -61,66 +62,45 @@ class Mitchel_Schaffer(DataGen):
             self.dataset = []
             
     def GenerateSample(self):
-        
-        2 1 2
-        1 0 1
-        2 1 2
-        
+
+        t_begin = 0
+        delta_t = 2
+        length_t = 1
+
         current_explore=[]
-        future_explore=[(x0,y0)]
+        explored = []
+        future_explore=[(self.x0[0],self.x0[1],t_begin)]
         t_begin=0
         t_end=2
         while future_explore != []:
             current_explore = future_explore
             future_explore = []
             for point in current_explore:
-                if point_above isvalid and not expored:
-                    future_explore.add(point_above)
-                ...
-                def f, solver, ..
-            t_begin+=2
-            t_end+=2
-                
-                
-        
-        for i in range(self.grid_size):
-            for j in range(self.grid_size):
-                
-                t_begin = i
-                t_end = i+2
-                
+                point_above = (point[0],point[1]-1,point[2]+delta_t)
+                point_below = (point[0],point[1]+1,point[2]+delta_t)
+                point_right = (point[0]+1,point[1],point[2]+delta_t)
+                point_left = (point[0]-1,point[1],point[2]+delta_t)
+
+                if point_above[1]<0 and point_above not in explored:
+                    future_explore.append(point_above)
+                if point_below[1]>=self.grid_size and point_below not in explored:
+                    future_explore.append(point_below)
+                if point_left[0]<0 and point_left not in explored:
+                    future_explore.append(point_left)
+                if point_right[0]>=self.grid_size and point_right not in explored:
+                    future_explore.append(point_right)
+
                 def f(u,t):
-                    I_app = self.I*(t>=t_begin and t<t_end)
-                    return [self.k*u[0]*(u[0]-self.alpha)*(1-u[0])-u[1]+I_app,self.eps*(u[0]-self.gamma*u[1])]
+                    I_app = self.I*(t>=point[2] and t<point[2]+length_t)
+                    return np.array([self.k*u[0]*(u[0]-self.alpha)*(1-u[0])-u[1]+I_app,self.eps*(u[0]-self.gamma*u[1])])
                 
                 self.solver.f=f
                 
                 self.solver.reset()
                 self.solver.generate()
-                #solver.plot_solution()
-                self.sample[i,j,:,:]=self.solver.u
+                self.solver.plot_solution()
+                self.sample[point[0],point[1],:,:]=self.solver.u
+                explored.append(point)
                 
         if self.create_dataset:
             self.dataset.append(self.sample)
-
-solver = ThetaMethod(T=500, dt=0.1, u0=np.array([0,0]), eqtype='ODE', theta=0.5)
-
-generator = DataGen(10,100,solver)
-print(np.shape(generator.dataset))
-
-# Mitchel_Schaffer(ThetaMethod(dt,T,eqtype,f=None))
-
-
-
-# for i in range(N):
-#     for j in range(i):
-#         t_begin = i
-#         t_end = i+2
-        
-#         solver = ThetaMethod(T=T, dt=dt, u0=u0, eqtype=eqtype, theta=0.5, f=f)
-#         solver.generate()
-#         solver.plot_solution()
-        
-#         grid[i,j] = solver.u
-        
-# dataset.append(grid)

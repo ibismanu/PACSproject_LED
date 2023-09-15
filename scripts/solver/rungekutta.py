@@ -1,4 +1,7 @@
-from GenerateParticle import GenerateParticle
+import sys
+
+sys.path.append('..')
+from datagen.GenerateParticle import GenerateParticle
 from utilities.utils import valid_butcher, valid_RK
 
 from abc import abstractmethod

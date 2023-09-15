@@ -1,6 +1,9 @@
 import numpy as np
-from thetamethod import ThetaMethod
-from rungekutta import RK_4
+import sys
+
+sys.path.append('..')
+from solver.thetamethod import ThetaMethod
+from solver.rungekutta import RK_4
 
 
 T = 500.0

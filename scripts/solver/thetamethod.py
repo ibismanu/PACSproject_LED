@@ -1,4 +1,8 @@
-from GenerateParticle import GenerateParticle
+import sys
+
+sys.path.append('..')
+
+from datagen.GenerateParticle import GenerateParticle
 
 import numpy as np
 from scipy.optimize import newton
@@ -29,7 +33,7 @@ class ThetaMethod(GenerateParticle):
             
             size = np.mean(np.abs(self.u[:, n]))
 
-            self.u[:,n+1] = newton(g,x0=self.u[:,n],tol=size*self.tol)
+            self.u[:,n+1] = newton(g,x0=self.u[:,n],tol=(size+1)*self.tol)
 
     def generatePDE(self):
         pass
