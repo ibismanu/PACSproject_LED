@@ -1,4 +1,4 @@
-from GenerateParticle import GenerateParticles
+from GenerateParticle import GenerateParticle
 from utilities.utils import valid_butcher, valid_RK
 
 from abc import abstractmethod
@@ -6,7 +6,7 @@ import numpy as np
 from scipy.optimize import newton, anderson
 
 
-class RungeKutta(GenerateParticles):
+class RungeKutta(GenerateParticle):
 
     but_A: np.array
     but_b: np.array

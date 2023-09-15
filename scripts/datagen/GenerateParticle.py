@@ -95,6 +95,22 @@ class GenerateParticle(ABC):
     def generate(self):
         pass
 
+    def reset(self):
+        u0 = self.u[:,0]
+        
+        if self.eqtype == 'ODE':
+            if np.isscalar(u0):
+                self.u = np.zeros((1, self.num_it))
+            else:
+                self.u = np.zeros((len(u0), self.num_it))
+
+        elif self.eqtype == 'PDE':
+            self.u = np.zeros(self.M.size()[0], self.numIT)
+        
+        self.u[:, 0] = u0
+        
+        
+        
     def save(self, format="NPY"):
         #set directory
         np.save(self.u)

@@ -1,9 +1,9 @@
-from GenerateParticle import GenerateParticles
+from GenerateParticle import GenerateParticle
 
 import numpy as np
 from scipy.optimize import newton
 
-class ThetaMethod(GenerateParticles):
+class ThetaMethod(GenerateParticle):
 
     theta: float
     tol: float

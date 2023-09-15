@@ -1,4 +1,4 @@
-from GenerateParticle import GenerateParticles
+from GenerateParticle import GenerateParticle
 from utilities.utils import integral
 from math import factorial
 from abc import abstractmethod
@@ -6,7 +6,7 @@ from abc import abstractmethod
 import numpy as np
 
 
-class Multistep(GenerateParticles):
+class Multistep(GenerateParticle):
 
     mul_A: np.array
     mul_b: np.array
