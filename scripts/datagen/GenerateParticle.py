@@ -3,13 +3,12 @@ import numpy as np
 import sys
 import matplotlib.pyplot as plt
 
-#sys.path.append('../utilities')
-import utils
-#from utilities import utils
+sys.path.append('..')
+# import utils
+from utilities import utils
 
 
-#class GenerateParticles
-class DataGen(ABC):
+class GenerateParticle(ABC):
 
     T: int
     dt: float

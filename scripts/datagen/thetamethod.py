@@ -1,9 +1,9 @@
-from datagen import DataGen
+from GenerateParticle import GenerateParticles
 
 import numpy as np
 from scipy.optimize import newton
 
-class ThetaMethod(DataGen):
+class ThetaMethod(GenerateParticles):
 
     theta: float
     tol: float

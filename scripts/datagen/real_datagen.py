@@ -1,9 +1,23 @@
+from thetamethod import ThetaMethod
+from GenerateParticle import GenerateParticle
+from abc import ABC, abstractmethod
 
-class DataGen():
+class DataGen(ABC):
     
     solver: GenerateParticle
     
-    def GenerateCollection:
+    def __init__():
+        
+
+    def save():
+        np.save(dateset)
+    
+
+class Mitchel_Schaffer(DataGen):
+
+    def __init__(self):
+
+    def GenerateCollection():
         for i in range(N):
             for j in range(i):
                 t_begin = i
@@ -16,7 +30,3 @@ class DataGen():
                 grid[i,j] = solver.u
                 
         dataset.append(grid)
-        
-        
-    def save:
-        np.save(dateset)

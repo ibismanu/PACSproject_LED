@@ -1,4 +1,4 @@
-from datagen import DataGen
+from GenerateParticle import GenerateParticles
 from utilities.utils import integral
 from math import factorial
 from abc import abstractmethod
@@ -6,7 +6,7 @@ from abc import abstractmethod
 import numpy as np
 
 
-class Multistep(DataGen):
+class Multistep(GenerateParticles):
 
     mul_A: np.array
     mul_b: np.array
