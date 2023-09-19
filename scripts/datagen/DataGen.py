@@ -56,7 +56,7 @@ class Mitchell_Schaeffer(DataGen):
         self.grid_size=grid_size
         self.N_particles = grid_size**2
         self.N_sample = N_sample
-        self.sample = np.zeros((grid_size,grid_size,np.shape(solver.u)[0],np.shape(solver.u)[1]))
+        self.sample = np.zeros((self.grid_size,self.grid_size,np.shape(solver.u)[0],np.shape(solver.u)[1]))
         if self.create_dataset:
             #self.dataset = np.zeros((N_sample,grid_size,grid_size,np.shape(solver.u)[0],np.shape(solver.u)[1]))
             self.dataset = []
@@ -64,14 +64,13 @@ class Mitchell_Schaeffer(DataGen):
     def GenerateSample(self):
 
         t_begin = 0
-        delta_t = 2
-        length_t = 1
+        delta_t = 20
+        length_t = 2
 
         current_explore=[]
         explored = []
         future_explore=[(self.x0[0],self.x0[1],t_begin)]
-        t_begin=0
-        t_end=2
+
         while future_explore != []:
             current_explore = future_explore
             future_explore = []
@@ -81,13 +80,13 @@ class Mitchell_Schaeffer(DataGen):
                 point_right = (point[0]+1,point[1],point[2]+delta_t)
                 point_left = (point[0]-1,point[1],point[2]+delta_t)
 
-                if point_above[1]<0 and point_above not in explored:
+                if point_above[1]>=0 and (point_above[0],point_above[1]) not in explored:
                     future_explore.append(point_above)
-                if point_below[1]>=self.grid_size and point_below not in explored:
+                if point_below[1]<self.grid_size and (point_below[0],point_below[1]) not in explored:
                     future_explore.append(point_below)
-                if point_left[0]<0 and point_left not in explored:
+                if point_left[0]>=0 and (point_left[0],point_left[1]) not in explored:
                     future_explore.append(point_left)
-                if point_right[0]>=self.grid_size and point_right not in explored:
+                if point_right[0]<self.grid_size and (point_right[0],point_right[1]) not in explored:
                     future_explore.append(point_right)
 
                 def f(u,t):
@@ -100,7 +99,7 @@ class Mitchell_Schaeffer(DataGen):
                 self.solver.generate()
                 self.solver.plot_solution()
                 self.sample[point[0],point[1],:,:]=self.solver.u
-                explored.append(point)
+                explored.append((point[0],point[1]))
                 
         if self.create_dataset:
             self.dataset.append(self.sample)

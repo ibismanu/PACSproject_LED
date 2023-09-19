@@ -122,7 +122,6 @@ class GenerateParticle(ABC):
             exact = u_ex(self.t)
         
         n_plots = len(self.u[:,0])
-        print(n_plots)
         fig, axs = plt.subplots(n_plots)
             
         for i in range(n_plots):
