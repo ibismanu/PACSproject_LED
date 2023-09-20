@@ -19,9 +19,10 @@ def to_numpy(fun):
 
 
 def valid_butcher(A, b, c, s):
+    tol = 1e-5
     valid_b = np.sum(b) == 1
     valid_c = np.sum(
-        np.abs(np.array([np.sum(row) for row in A]) - c)) < 2*len(c)*epsilon
+        np.abs(np.array([np.sum(row) for row in A]) - c)) < tol
     valid_size = len(b) == s and A.shape[0] == s and A.shape[1] == s
 
     assert valid_b, "invalid b component of butcher array"

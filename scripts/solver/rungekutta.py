@@ -168,7 +168,7 @@ class RK_4(RK_explicit):
     def __init__(self, T, dt, u0, eqtype, f=None, M=None, A=None, F=None):
         but_A = np.array([[0, 0, 0, 0], [1/3, 0, 0, 0],
                          [-1/3, 1, 0, 0], [1, -1, 1, 0]], dtype=np.float32)
-        but_b = np.array([0.125, 0.375, 0.375, 0.125], dtype=np.float32)
+        but_b = np.array([1/8, 3/8, 3/8, 1/8], dtype=np.float32)
         but_c = np.array([0, 1/3, 2/3, 1], dtype=np.float32)
 
         super().__init__(T=T, dt=dt, u0=u0, eqtype=eqtype, but_A=but_A,
