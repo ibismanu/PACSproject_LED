@@ -165,11 +165,17 @@ class LED:
         data_file = self.data_dir+data_name
         
         if data_name[-3:] == "npy":
-            X_train = np.load(data_file)
+            X = np.load(data_file)
         elif data_name[-3:] == "csv":
-            X_train = np.loadtxt(data_file,delimiter=",")
+            X = np.loadtxt(data_file,delimiter=",")
         else:
             raise ValueError("File type not supported")
+        
+        X_train = []
+        for i in range(np.shape(X)[0]):
+            for j in range(np.shape(X)[-1]):
+                X_train.append(X[i,:,:,:,j])
+        X_train = np.array(X_train)
             
         history = self.autoencoder.fit(
              X_train,  
