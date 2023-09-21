@@ -7,6 +7,8 @@
 # LED();
 
 
+
+
 #'''LED class'''
 import tensorflow as tf
 import numpy as np
@@ -17,19 +19,28 @@ tfkl = tfk.layers
 class LED:
 
     latent_dim: int
-    encoder: None
-    decoder: None
-    autoencoder: None
-    RNN: None
+    encoder: tfk.Model
+    decoder: tfk.Model
+    autoencoder: tfk.Model
+    RNN: tfk.Model
     
-    def __init__(self, latent_dim, seed=None):
+    #data_dir: np.string
+    #saving_dir: np.string
+    
+    def __init__(self, latent_dim, data_dir="../../dataset/", saving_dir="../../models/", seed=None):
         self.seed = seed
         self.latent_dim=latent_dim
         
-        self.decoder=None
-        self.encoder=None
-        self.autoencoder=None
-        self.RNN=None
+        
+        if data_dir[-1] == "/":
+            self.data_dir = data_dir
+        else:
+            self.data_dir = data_dir+"/"
+        
+        if saving_dir[-1] == "/":
+            self.saving_dir = saving_dir
+        else:
+            self.saving_dir = saving_dir+"/"
         
         pass
     
@@ -149,12 +160,50 @@ class LED:
             
             
             
-    # def train(what_to_save='all'):
-    #     train E,D
+    def train_autoencoder(self, data_name, saving_name=None):
         
-    #     net = E+RNN+D
+        data_file = self.data_dir+data_name
         
-    #     train net (E,D fixed)
+        if data_name[-3:] == "npy":
+            X_train = np.load(data_file)
+        elif data_name[-3:] == "csv":
+            X_train = np.loadtxt(data_file,delimiter=",")
+        else:
+            raise ValueError("File type not supported")
+            
+        history = self.autoencoder.fit(
+             X_train,  
+             X_train,
+             batch_size=32,
+             epochs=1000,
+             validation_split=.2,
+             callbacks=[
+                 tfk.callbacks.EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True),
+                 tfk.callbacks.ReduceLROnPlateau(monitor='val_loss', patience=5, factor=0.5, min_lr=1e-5),
+                 ]
+             ).history
+        
+        if saving_name() is not None:
+            saving_file = self.saving_dir+saving_name
+            auto_json = self.autoencoder.to_json()
+            with open(saving_file+'.json','w') as json_file:
+                json_file.write(auto_json)
+            self.autoencoder.save_weights(saving_file+'.h5')
+        
+        
+    def load_autoencoder(self, filename):
+        with open(filename+'.json', 'r') as json_file:
+            auto_json = json_file.read()
+        self.autoencoder = tfk.models.model_from_json(auto_json)
+        self.autoencoder.load_weights(filename+'.h5')
+        
+     #    extract E
+    #     EncodedData = E(Data)
+    
+    #     
+    #     net = RNN+D
+        
+    #     train net (EncodedData->Data, D fixed)
         
     #     #maybe fine tune all
         
@@ -176,21 +225,23 @@ class LED:
 
 
 
-latent_dim = 10
-NN = LED(latent_dim)
 
-input_shape = (31,31,2)
+# latent_dim = 10
+# NN = LED(latent_dim)
+# E = NN.encoder
 
-
-conv = [(8,3),(16,3),(32,3),(16,3)]
-dense = [64,128]
+# input_shape = (31,31,2)
 
 
-#NN.build_autoencoder(input_shape, conv, dense)
+# conv = [(8,3),(16,3),(32,3),(16,3)]
+# dense = [64,128]
 
-input_shape = (4,latent_dim)
-dense = [64,32]
-lstm = [(32,False),(16,True),(32,False)]
+
+# NN.build_autoencoder(input_shape, conv, dense)
+
+# input_shape = (4,latent_dim)
+# dense = [64,32]
+# lstm = [(32,False),(16,True),(32,False)]
 
 
 # def f(mydense):
@@ -198,7 +249,7 @@ lstm = [(32,False),(16,True),(32,False)]
 #         print("hi")
 # f(dense)
 
-NN.build_RNN(input_shape, lstm, dense)
+# NN.build_RNN(input_shape, lstm, dense)
 
 
 

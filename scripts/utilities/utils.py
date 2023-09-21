@@ -19,6 +19,7 @@ def to_numpy(fun):
 
 
 def valid_butcher(A, b, c, s):
+    #TODO: dynimic tolerance depending on data type
     tol = 1e-5
     valid_b = np.sum(b) == 1
     valid_c = np.sum(

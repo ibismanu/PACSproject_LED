@@ -17,6 +17,7 @@ class DataGen(ABC):
         self.N_particles=N_particles
         self.create_dataset=create_dataset
         
+        #scritto male
         self.sample = np.zeros((N_particles,np.shape(solver.u)[0],np.shape(solver.u)[1]))
         if create_dataset:
             #self.dataset = np.zeros((N_sample,N_particles,np.shape(solver.u)[0],np.shape(solver.u)[1]))
@@ -29,8 +30,10 @@ class DataGen(ABC):
     def save_sample(self):
         np.save(self.sample)
         
-    def save_datast(self):
-        np.save(self.dataset)
+    def save_dataset(self, filename, format='npy'):
+        if format == 'npy':
+            np.save(filename, self.dataset)
+        #TODO other formats
     
 
 class Mitchell_Schaeffer(DataGen):
@@ -61,7 +64,7 @@ class Mitchell_Schaeffer(DataGen):
             #self.dataset = np.zeros((N_sample,grid_size,grid_size,np.shape(solver.u)[0],np.shape(solver.u)[1]))
             self.dataset = []
             
-    def GenerateSample(self):
+    def GenerateSample(self, filename, format='npy', plot=False):
 
         t_begin = 0
         delta_t = 20
@@ -97,9 +100,12 @@ class Mitchell_Schaeffer(DataGen):
                 
                 self.solver.reset()
                 self.solver.generate()
-                self.solver.plot_solution()
+                if plot:
+                    self.solver.plot_solution()
                 self.sample[point[0],point[1],:,:]=self.solver.u
                 explored.append((point[0],point[1]))
                 
         if self.create_dataset:
             self.dataset.append(self.sample)
+        
+        self.save_dataset(filename, format) 
