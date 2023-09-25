@@ -238,7 +238,7 @@ class LED:
     def train_RNN(self, data_name, autoencoder_name=None, saving_name=None):
 
         X = self.encode(data_name=data_name, autoencoder_name=autoencoder_name)[0][:-2] #take only first sample
-        Y = X[1:-1]
+        Y = X[-1]
         
         
         

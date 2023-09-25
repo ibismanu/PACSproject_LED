@@ -1,16 +1,12 @@
 import numpy as np
 import functools
-import numbers
-import sys
-
-epsilon = sys.float_info.epsilon
 
 
 def to_numpy(fun):
     @functools.wraps(fun)
     def wrapper(*args, **kwargs):
         ret = fun(*args, **kwargs)
-        if isinstance(ret, numbers.Number):
+        if np.isscalar(ret):
             ret = np.array([ret])
         if not isinstance(ret, np.ndarray):
             ret = np.array(ret)
@@ -18,8 +14,7 @@ def to_numpy(fun):
     return wrapper
 
 
-def valid_butcher(A, b, c, s):
-    #TODO: dynimic tolerance depending on data type
+def check_butcher_sum(A, b, c, s):
     tol = 1e-5
     valid_b = np.sum(b) == 1
     valid_c = np.sum(
@@ -31,22 +26,11 @@ def valid_butcher(A, b, c, s):
     assert valid_size, "array sizes not compatible"
 
 
-def check_explicit(A, semi=False):
+def check_explicit_array(A, semi=False):
     if semi:
         return np.array_equal(A, np.tril(A))
     else:
         return np.array_equal(A, np.tril(A, -1))
-
-
-def valid_RK(A, method):  # @TODO add warnings
-    if method == 'explicit':
-        assert check_explicit(
-            A), "explicit method called but implicit butcher array given"
-    elif method == 'semi':
-        assert check_explicit(
-            A, semi=True), "semi-implicit method called but fully implicit butcher array given"
-    elif method == 'implicit':
-        pass
 
 
 def integral(g, j, p):
