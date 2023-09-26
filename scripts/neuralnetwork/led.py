@@ -234,16 +234,45 @@ class LED:
             encoded_data.append(encoded_sample)
 
         return np.array(encoded_data)
+ 
 
     def train_RNN(self, data_name, autoencoder_name=None, saving_name=None):
 
         X = self.encode(data_name=data_name, autoencoder_name=autoencoder_name)[0][:-2] #take only first sample
         Y = X[-1]
         
+        #dim_x: (latent_dim, timesteps, nsample)
         
         
         
+        for i in range(n_sample):
+            X_train.append(build_sequences(X[:,:,i]))
         
+        
+        # 0 1 2 3 4 5 6 - -
+    
+        # 10 11 12 13 14 15 16
+        
+        
+        # 0 1 2 | 3
+        # 1 2 3 | 4
+        # 2 3 4 | 5
+        # 3 4 5 | 6
+        # 10 11 12 | 13
+        # 11 12 13 | 14
+        # 12 13 14 | 15
+        # 13 14 15 | 16
+        
+        
+        
+        P1_t
+        P2_t
+        P3_t
+        
+        
+        P11_T
+        P12_T
+        P13_T
 
     #    extract E
     #     EncodedData = E(Data)
