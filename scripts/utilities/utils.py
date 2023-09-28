@@ -50,24 +50,40 @@ def build_sequences(data, window, stride=1, telescope=1):
     target = []
         
     for idx in np.arange(0,data.shape[1]-window-telescope,stride):
-        dataset.append(data[:,idx:idx+window])
-        target.append(data[:,idx+window:idx+window+telescope])
+        dataset.append(np.transpose(data[:,idx:idx+window]))
+        target.append(np.transpose(data[:,idx+window:idx+window+telescope]))
     
     return np.array(dataset),np.array(target)
 
 
+# X_train = np.array([])
+# Y_train = np.array([])
 
-X = np.array([[0,1,2,3,4,5,6],
-              [10,11,12,13,14,15,16],
-              [20,21,22,23,24,25,26]])
+# X = np.array([[0,1,2,3,4,5,6],
+#                [10,11,12,13,14,15,16],
+#                [20,21,22,23,24,25,26]])
 
-X_train, Y_train = build_sequences(X,4)
-
-#dim_x: (n_sample, latent_dim, timesteps)
+# X_temp, Y_temp = build_sequences(X,4)
 
 
+# X_train = X_temp
+# Y_train = Y_temp
 
-print(X_train.shape)
-print(X_train)
+# X = np.array([[-0,-1,-2,-3,-4,-5,-6],
+#                [-10,-11,-12,-13,-14,-15,-16],
+#                [-20,-21,-22,-23,-24,-25,-26]])
+
+# X_temp, Y_temp = build_sequences(X,4)
+
+
+# X_train = np.concatenate((X_train,X_temp),0)
+# Y_train = np.concatenate((Y_train,Y_temp),0)
+
+# dim_x: (n_sample, latent_dim, timesteps)
+
+
+
+#print(X_train.shape)
+print(Y_train)
     
     

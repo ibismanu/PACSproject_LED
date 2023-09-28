@@ -13,6 +13,10 @@ import numpy as np
 tfk = tf.keras
 tfkl = tfk.layers
 
+import sys
+sys.path.append('..')
+from utilities.utils import build_sequences
+
 # TODO IMPORTANTE: quando si salvano i dati, fare un trasposto per salvare (time, space)
 
 
@@ -155,6 +159,11 @@ class LED:
         output_layer = tfkl.Dense(
             units=self.latent_dim, activation=activation)(dropout)
 
+        decoder = self.autoencoder.get_layer('Decoder') 
+        decoder.trainable=False
+        
+        output_layer = decoder(output_layer)
+        
         self.RNN = tfk.Model(inputs=input_layer,
                              outputs=output_layer, name='model')
         self.RNN.compile(loss=loss, optimizer=optimizer, metrics=metrics)
@@ -175,8 +184,10 @@ class LED:
 
         X_train = []
         for i in range(np.shape(X)[0]):
-            for j in range(np.shape(X)[-1]):
-                X_train.append(X[i, :, :, :, j])
+            #for j in range(np.shape(X)[-1]):
+                #X_train.append(X[i, :, :, :, j])
+            for j in range(np.shape(X)[1]):
+                X_train.append(X[i, j, :, :, :])
         X_train = np.array(X_train)
 
         history = self.autoencoder.fit(
@@ -239,16 +250,45 @@ class LED:
     def train_RNN(self, data_name, autoencoder_name=None, saving_name=None):
 
         X = self.encode(data_name=data_name, autoencoder_name=autoencoder_name)[0][:-2] #take only first sample
-        Y = X[-1]
+        #Y = X[-1]
         
         #dim_x: (latent_dim, timesteps, nsample)
         
+        # decoder = self.autoencoder.get_layer('Decoder')
         
+        X_train,Y_train = build_sequences(X[:,:,0])
         
-        for i in range(n_sample):
-            X_train.append(build_sequences(X[:,:,i]))
+        for i in range(1,np.shape(X)[-1]):
+            X_temp,Y_temp = build_sequences(X[:,:,i])
+            
+            X_train = np.concatenate((X_train,X_temp),0)
+            Y_train = np.concatenate((Y_train,Y_temp),0)
         
+        # for i in range(Y_train.shape[0]):
+        #     for j in range(Y_train.shape[1]):
+        #         Y_train[i,j] = decoder(Y_train[i,j])
         
+        history = self.RNN.fit(
+            X_train,
+            Y_train,
+            batch_size=32,
+            epochs=1000,
+            validation_split=.2,
+            callbacks=[
+                tfk.callbacks.EarlyStopping(
+                    monitor='val_loss', patience=10, restore_best_weights=True),
+                tfk.callbacks.ReduceLROnPlateau(
+                    monitor='val_loss', patience=5, factor=0.5, min_lr=1e-5),
+            ]
+        ).history
+
+        if saving_name is not None:
+            saving_file = self.saving_dir+saving_name
+            auto_json = self.RNN.to_json()
+            with open(saving_file+'.json', 'w') as json_file:
+                json_file.write(auto_json)
+            self.RNN.save_weights(saving_file+'.h5')
+            
         # 0 1 2 3 4 5 6 - -
     
         # 10 11 12 13 14 15 16
@@ -263,16 +303,6 @@ class LED:
         # 12 13 14 | 15
         # 13 14 15 | 16
         
-        
-        
-        P1_t
-        P2_t
-        P3_t
-        
-        
-        P11_T
-        P12_T
-        P13_T
 
     #    extract E
     #     EncodedData = E(Data)
@@ -303,7 +333,6 @@ class LED:
 
 # latent_dim = 10
 # NN = LED(latent_dim)
-# E = NN.encoder
 
 # input_shape = (31,31,2)
 
