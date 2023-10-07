@@ -3,7 +3,7 @@ import numpy as np
 import sys
 sys.path.append('..')
 from particle.generate_particle import GenerateParticle
-from datagen.datagen import DataGen
+from datagen import DataGen
 
 class MitchellSchaeffer(DataGen):
 

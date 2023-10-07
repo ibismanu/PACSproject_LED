@@ -36,8 +36,12 @@ class Params():
 
 
 class ODEParams(Params):
-    def __init__(self, T: float, dt: float, u0, f):
-        super().__init__(T, dt, u0)
+    def __init__(self, T: float, dt: float, u0, f, theta=None, tol=None,
+                 RK_A=None, RK_b=None, RK_c=None,
+                 multi_A=None, multi_b=None, multi_order=None):
+        super().__init__(T, dt, u0, theta=theta, tol=tol,
+                 RK_A=RK_A, RK_b=RK_b, RK_c=RK_c,
+                 multi_A=multi_A, multi_b=multi_b, multi_order=multi_order)
         self.f = utils.to_numpy(f)
 
 
@@ -75,7 +79,7 @@ class GenerateParticle(ABC):
             print('Final time reached: ', self.T)
 
         if eqtype == 'ODE':
-            assert isinstance(params, ODEParams)
+            # assert isinstance(params, ODEParams)
             self.f = params.f
             self.u = np.zeros((len(params.u0), self.num_it+1))
         elif eqtype == 'PDE':
