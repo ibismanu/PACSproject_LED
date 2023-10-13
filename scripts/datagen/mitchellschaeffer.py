@@ -35,9 +35,15 @@ class MitchellSchaeffer(DataGen):
 
     def generate_sample(self, x0:list, plot=False):
 
+        #TODO metodo alternativo per calcolare I_app, griglia reale
+        # dato iniziale: velocità di propagazione della corrente
+        # t_begin = velocità*distanza
+        # t_end = velocità*distanza + length_t 
+        # loop sulla griglia per calcolare I_app
+
         t_begin = 0.
         delta_t = 20.
-        length_t = 2.
+        length_t = 2
 
     
         current_explore = []
@@ -49,18 +55,21 @@ class MitchellSchaeffer(DataGen):
             future_explore = []
 
             for point in current_explore:
-                above = (point[0], point[1]-1, point[2]+delta_t)
-                below = (point[0], point[1]+1, point[2]+delta_t)
-                left = (point[0]-1, point[1], point[2]+delta_t)
-                right = (point[0]+1, point[1], point[2]+delta_t)
+                above = (point[0]-1, point[1], point[2]+delta_t)
+                below = (point[0]+1, point[1], point[2]+delta_t)
+                left = (point[0], point[1]-1, point[2]+delta_t)
+                right = (point[0], point[1]+1, point[2]+delta_t)
 
-                if above[1] >= 0 and (above[0], above[1]) not in explored:
+                if above[0] >= 0 and (above[0], above[1]) not in explored and above not in future_explore:
                     future_explore.append(above)
-                if below[1] < self.grid_size[0] and (below[0], below[1]) not in explored:
+
+                if below[0] < self.grid_size[0] and (below[0], below[1]) not in explored and below not in future_explore:
                     future_explore.append(below)
-                if left[0] >= 0 and (left[0], left[1]) not in explored:
+
+                if left[1] >= 0 and (left[0], left[1]) not in explored and left not in future_explore:
                     future_explore.append(left)
-                if right[0] < self.grid_size[1] and (right[0], right[1]) not in explored:
+
+                if right[1] < self.grid_size[1] and (right[0], right[1]) not in explored and right not in future_explore:
                     future_explore.append(right)
 
                 def f(u, t):
@@ -75,9 +84,6 @@ class MitchellSchaeffer(DataGen):
                 self.solver.generate()
                 if plot:
                     self.solver.plot_solution()
-                
-                # print(np.shape(self.sample))
-                # print(np.shape(self.solver.u))
 
                 self.sample[:, point[0], point[1]] = self.solver.u.transpose()
                 # forse sbagliato
@@ -86,8 +92,8 @@ class MitchellSchaeffer(DataGen):
 
         self.dataset.append(self.sample)
 
-    def generate_dataset(self, n_samples, filename, format='npy'):
+    def generate_dataset(self, n_samples, filename, format='npy',plot=False):
         for i in range(n_samples):
-            x0 = (0,0) # to be randomized
-            self.generate_sample(x0)
+            x0 = (np.random.randint(0,self.grid_size[0]),np.random.randint(0,self.grid_size[1]))  
+            self.generate_sample(x0,plot=plot)
         self.save_dataset(filename, format)

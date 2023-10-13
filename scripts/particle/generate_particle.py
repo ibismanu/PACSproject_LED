@@ -36,7 +36,7 @@ class Params():
 
 
 class ODEParams(Params):
-    def __init__(self, T: float, dt: float, u0, f, theta=None, tol=None,
+    def __init__(self, T: float, dt: float, u0, f=lambda *args:None, theta=None, tol=None,
                  RK_A=None, RK_b=None, RK_c=None,
                  multi_A=None, multi_b=None, multi_order=None):
         super().__init__(T, dt, u0, theta=theta, tol=tol,

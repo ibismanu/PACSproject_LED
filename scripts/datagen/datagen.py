@@ -31,5 +31,5 @@ class DataGen(ABC):
 
     def save_dataset(self, name, format='npy'):
         if format == 'npy':
-            np.save('../../data/dataset/'+name, self.dataset)
+            np.save('../../dataset/'+name, self.dataset)
         # TODO other formats
