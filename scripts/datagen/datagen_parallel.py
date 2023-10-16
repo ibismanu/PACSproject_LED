@@ -1,4 +1,4 @@
-from particle.generate_particle import GenerateParticle, Params
+from particle.generate_particle_parallel import GenerateParticle, Params
 import numpy as np
 from abc import ABC, abstractmethod
 from tqdm.auto import tqdm
@@ -9,18 +9,14 @@ sys.path.append('..')
 
 class DataGen(ABC):
 
-    solver: GenerateParticle
     sample: np.array
     dataset: list
-    n_samples: int
+    sample: np.array
     n_particles: int
 
-    def __init__(self, n_particles: int, eqtype: str, params:Params):
-        self.n_particles = n_particles
-        # self.solver = ThetaMethod()
+    def __init__(self, n_particles: int):
 
-        # shape = (n_particles, np.shape(solver.u)[0], np.shape(solver.u)[1])
-        # self.sample = np.zeros(shape=shape)
+        self.n_particles = n_particles
         self.dataset = []
 
     @abstractmethod

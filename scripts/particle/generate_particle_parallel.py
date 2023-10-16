@@ -13,13 +13,24 @@ class Params():
     dt: float
     u0: np.array
 
-    def __init__(self, T: float, dt: float, u0,
-                 theta=None, tol=None,
-                 RK_A=None, RK_b=None, RK_c=None,
-                 multi_A=None, multi_b=None, multi_order=None):
+    def __init__(self, T, dt, u0):
 
         self.T = T
         self.dt = dt
+
+        if np.isscalar(u0):
+            self.u0 = np.array([u0])
+        else:
+            self.u0 = u0
+
+
+class ODEParams(Params):
+    def __init__(self, T, dt, u0, f=None, theta=None, tol=None,
+                 RK_A=None, RK_b=None, RK_c=None,
+                 multi_A=None, multi_b=None, multi_order=None):
+        super().__init__(T, dt, u0)
+        self.f = utils.to_numpy(f)
+        self.f = f
         self.theta = theta
         self.tol = tol
         self.RK_A = RK_A
@@ -29,24 +40,9 @@ class Params():
         self.multi_b = multi_b
         self.multi_order = multi_order
 
-        if np.isscalar(u0):
-            self.u0 = np.array([u0])
-        else:
-            self.u0 = u0
-
-# lambda *args:None
-class ODEParams(Params):
-    def __init__(self, T: float, dt: float, u0, f=lambda x:0., theta=None, tol=None,
-                 RK_A=None, RK_b=None, RK_c=None,
-                 multi_A=None, multi_b=None, multi_order=None):
-        super().__init__(T, dt, u0, theta=theta, tol=tol,
-                 RK_A=RK_A, RK_b=RK_b, RK_c=RK_c,
-                 multi_A=multi_A, multi_b=multi_b, multi_order=multi_order)
-        self.f = utils.to_numpy(f)
-
 
 class PDEParams(Params):
-    def __init__(self, T: float, dt: float, u0, mass_matrix: np.array, system_matrix: np.array, forcing_term: np.array):
+    def __init__(self, T, dt, u0, mass_matrix: np.array, system_matrix: np.array, forcing_term: np.array):
         super().__init__(T, dt, u0)
         self.mass_matrix = mass_matrix
         self.system_matrix = system_matrix

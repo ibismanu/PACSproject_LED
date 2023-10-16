@@ -2,38 +2,48 @@ import numpy as np
 from tqdm.auto import tqdm
 import sys
 sys.path.append('..')
-from particle.generate_particle import GenerateParticle, Params
-from datagen import DataGen
+from particle.generate_particle_parallel import GenerateParticle, Params
+from datagen_parallel import DataGen
 from multiprocessing import Pool
 from particle.thetamethod import ThetaMethod
+import time
 
 class MitchellSchaeffer(DataGen):
 
     # TODO better names
+    eqtype: str
+    params: Params
     k: float
     alpha: float
     epsilon: float
     I: float
     gamma: float
     grid_size: tuple
-    x0: list
+    solver: str
+    num_it: int         # number of iterations
+    
+    
 
-    def __init__(self, eqtype: str, params:Params,
-                 k: float, alpha: float, epsilon: float,
-                 I: float, gamma: float, grid_size: tuple):
+    def __init__(self, eqtype, params,
+                 k, alpha, epsilon,
+                 I, gamma, grid_size:tuple, solver=None):
 
         n_particles = grid_size[0]*grid_size[1]
 
-        super().__init__(n_particles, eqtype, params)
+        super().__init__(n_particles)
 
+        self.eqtype = eqtype
+        self.params = params
         self.k = k
         self.alpha = alpha
         self.epsilon = epsilon
         self.I = I
         self.gamma = gamma
         self.grid_size = grid_size
+        self.solver = solver
+        self.num_it = int(params.T/params.dt)
         
-        self.sample = np.zeros((params.num_it+1,grid_size[0],grid_size[1],len(params.u0)))
+        self.sample = np.zeros((self.num_it+1,grid_size[0],grid_size[1],len(params.u0)))
 
     def generate_sample(self, sample_id, x0=None, plot=False):
 
@@ -46,7 +56,7 @@ class MitchellSchaeffer(DataGen):
             x0 = (np.random.randint(0,self.grid_size[0]),np.random.randint(0,self.grid_size[1]))
 
         t_begin = 0.
-        delta_t = 20.
+        delta_t = 50.
         length_t = 2
 
     
@@ -92,23 +102,19 @@ class MitchellSchaeffer(DataGen):
                     solver.plot_solution()
 
                 self.sample[:, point[0], point[1]] = solver.u.transpose()
-                # forse sbagliato
 
                 explored.append((point[0], point[1]))
 
-        # dataset.append(self.sample)
         filename = f'sample_{sample_id}.npy'
         np.save(filename, self.sample)
 
-    # def generate_dataset(self, n_samples, filename, format='npy',plot=False):
-    #     for i in tqdm(range(n_samples)):  
-    #         self.generate_sample(x0,plot=plot)
-    #     self.save_dataset(filename, format)
-
     def generate_dataset_parallel(self, num_samples, num_processes):
+
         # Create a pool of processes
+        start_time = time.perf_counter()
         with Pool(processes=num_processes) as pool:
             # Generate samples in parallel
             pool.map(self.generate_sample, range(num_samples))
-
+        finish_time = time.perf_counter()
+        print('Program finished in {} seconds'.format(finish_time-start_time))
 

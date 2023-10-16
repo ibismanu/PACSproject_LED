@@ -3,7 +3,7 @@ from scipy.optimize import newton
 
 import sys
 sys.path.append('..')
-from particle.generate_particle import GenerateParticle, Params
+from particle.generate_particle_parallel import GenerateParticle, Params
 
 
 class ThetaMethod(GenerateParticle):
