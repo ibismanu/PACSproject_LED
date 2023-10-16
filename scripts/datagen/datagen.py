@@ -1,6 +1,7 @@
 from particle.generate_particle import GenerateParticle, Params
 import numpy as np
 from abc import ABC, abstractmethod
+from tqdm.auto import tqdm
 
 import sys
 sys.path.append('..')

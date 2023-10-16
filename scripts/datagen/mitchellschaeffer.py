@@ -1,5 +1,5 @@
 import numpy as np
-
+from tqdm.auto import tqdm
 import sys
 sys.path.append('..')
 from particle.generate_particle import GenerateParticle
@@ -93,7 +93,7 @@ class MitchellSchaeffer(DataGen):
         self.dataset.append(self.sample)
 
     def generate_dataset(self, n_samples, filename, format='npy',plot=False):
-        for i in range(n_samples):
+        for i in tqdm(range(n_samples)):
             x0 = (np.random.randint(0,self.grid_size[0]),np.random.randint(0,self.grid_size[1]))  
             self.generate_sample(x0,plot=plot)
         self.save_dataset(filename, format)
