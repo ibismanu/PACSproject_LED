@@ -69,49 +69,49 @@ class MitchellSchaeffer(DataGen):
                 self.sample[:, x, y] = self.solver.u.transpose()
     
     
-        current_explore = []
-        explored = []
-        future_explore = [(x0[0],x0[1],t_begin)]
+        # current_explore = []
+        # explored = []
+        # future_explore = [(x0[0],x0[1],t_begin)]
 
-        while future_explore:  # same as while future_explore != []
-            current_explore = future_explore
-            future_explore = []
+        # while future_explore:  # same as while future_explore != []
+        #     current_explore = future_explore
+        #     future_explore = []
 
-            for point in current_explore:
-                above = (point[0]-1, point[1], point[2]+delta_t)
-                below = (point[0]+1, point[1], point[2]+delta_t)
-                left = (point[0], point[1]-1, point[2]+delta_t)
-                right = (point[0], point[1]+1, point[2]+delta_t)
+        #     for point in current_explore:
+        #         above = (point[0]-1, point[1], point[2]+delta_t)
+        #         below = (point[0]+1, point[1], point[2]+delta_t)
+        #         left = (point[0], point[1]-1, point[2]+delta_t)
+        #         right = (point[0], point[1]+1, point[2]+delta_t)
 
-                if above[0] >= 0 and (above[0], above[1]) not in explored and above not in future_explore:
-                    future_explore.append(above)
+        #         if above[0] >= 0 and (above[0], above[1]) not in explored and above not in future_explore:
+        #             future_explore.append(above)
 
-                if below[0] < self.grid_size[0] and (below[0], below[1]) not in explored and below not in future_explore:
-                    future_explore.append(below)
+        #         if below[0] < self.grid_size[0] and (below[0], below[1]) not in explored and below not in future_explore:
+        #             future_explore.append(below)
 
-                if left[1] >= 0 and (left[0], left[1]) not in explored and left not in future_explore:
-                    future_explore.append(left)
+        #         if left[1] >= 0 and (left[0], left[1]) not in explored and left not in future_explore:
+        #             future_explore.append(left)
 
-                if right[1] < self.grid_size[1] and (right[0], right[1]) not in explored and right not in future_explore:
-                    future_explore.append(right)
+        #         if right[1] < self.grid_size[1] and (right[0], right[1]) not in explored and right not in future_explore:
+        #             future_explore.append(right)
 
-                def f(u, t):
-                    I_app = self.I * \
-                        (t >= point[2] and t < point[2]+length_t)
-                    res = [self.k*u[0]*(u[0] - self.alpha) * (1 - u[0]) - u[1] + I_app,
-                            self.epsilon*(u[0] - self.gamma*u[1])]
-                    return np.array(res)
+        #         def f(u, t):
+        #             I_app = self.I * \
+        #                 (t >= point[2] and t < point[2]+length_t)
+        #             res = [self.k*u[0]*(u[0] - self.alpha) * (1 - u[0]) - u[1] + I_app,
+        #                     self.epsilon*(u[0] - self.gamma*u[1])]
+        #             return np.array(res)
 
-                self.solver.f = f
-                self.solver.reset()
-                self.solver.generate()
-                if plot:
-                    self.solver.plot_solution()
+        #         self.solver.f = f
+        #         self.solver.reset()
+        #         self.solver.generate()
+        #         if plot:
+        #             self.solver.plot_solution()
 
-                self.sample[:, point[0], point[1]] = self.solver.u.transpose()
-                # forse sbagliato
+        #         self.sample[:, point[0], point[1]] = self.solver.u.transpose()
+        #         # forse sbagliato
 
-                explored.append((point[0], point[1]))
+        #         explored.append((point[0], point[1]))
 
         self.dataset.append(self.sample)
 
@@ -130,7 +130,7 @@ class MitchellSchaeffer(DataGen):
 # v = 0.05
 # length_t = 2
 
-# x0 = np.array([5,5])
+# x0 = np.array([5.1,2.3])
 # grid_size = [10,10]
 
 # current_explore = []
