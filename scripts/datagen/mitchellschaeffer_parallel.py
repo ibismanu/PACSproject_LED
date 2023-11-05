@@ -89,9 +89,10 @@ class MitchellSchaeffer(DataGen):
                     solver.plot_solution()
 
                 self.sample[:, i, j] = solver.u.transpose()
+                
 
-        filename = f"sample_{sample_id}.npz"
-        np.savez_compressed(filename, self.sample)
+        filename = f"sample_{sample_id}.npy" #.npz
+        np.save(filename, self.sample) #savez_compressed
 
     def generate_dataset_parallel(
         self, num_samples, num_processes, x0=None, plot=False
