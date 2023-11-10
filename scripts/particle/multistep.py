@@ -3,7 +3,8 @@ from math import factorial
 
 import sys
 sys.path.append('..')
-from particle.generate_particle import GenerateParticle, Params
+from particle.generate_particle import GenerateParticle
+from utilities.params import Params
 from utilities.utils import integral
 
 

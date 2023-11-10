@@ -16,6 +16,9 @@ tfkl = tfk.layers
 import sys
 sys.path.append('..')
 from utilities.utils import build_sequences
+from utilities.params import NNParams
+
+from tqdm.auto import tqdm
 
 # TODO IMPORTANTE: quando si salvano i dati, fare un trasposto per salvare (time, space)
 
@@ -171,37 +174,39 @@ class LED:
         if verbose:
             self.RNN.summary(expand_nested=True)
 
-    def train_autoencoder(self, data_name, saving_name=None):
+    def train_autoencoder(self, data_name, parameters=NNParams(), saving_name=None):
 
         data_file = self.data_dir+data_name
 
         if data_name[-3:] == "npy":
             X = np.load(data_file)
+        elif data_name[-3:] == "npz":
+            X = np.load(data_file)['my_data']
         elif data_name[-3:] == "csv":
             X = np.loadtxt(data_file, delimiter=",")
         else:
             raise ValueError("File type not supported")
 
+
+        print("---------------PREPARING TEST DATA--------------------")
         X_train = []
-        for i in range(np.shape(X)[0]):
+        for i in tqdm(range(np.shape(X)[0])):
             #for j in range(np.shape(X)[-1]):
                 #X_train.append(X[i, :, :, :, j])
             for j in range(np.shape(X)[1]):
                 X_train.append(X[i, j, :, :, :])
         X_train = np.array(X_train)
-
+        print("---------------TEST DATA READY--------------------")
+        
+        print("---------------STARTING TRAINING--------------------")
+        
         history = self.autoencoder.fit(
             X_train,
             X_train,
-            batch_size=32,
-            epochs=1000,
-            validation_split=.2,
-            callbacks=[
-                tfk.callbacks.EarlyStopping(
-                    monitor='val_loss', patience=10, restore_best_weights=True),
-                tfk.callbacks.ReduceLROnPlateau(
-                    monitor='val_loss', patience=5, factor=0.5, min_lr=1e-5),
-            ]
+            batch_size=parameters.batch_size,
+            epochs=parameters.epochs,
+            validation_split=parameters.validation_split,   
+            callbacks=parameters.callbacks
         ).history
 
         if saving_name is not None:
@@ -223,6 +228,8 @@ class LED:
 
         if filename[-3:] == "npy":
             raw_data = np.load(filename)
+        elif filename[-3:] == "npz":
+            raw_data = np.load(filename)['my_data']
         elif filename[-3:] == "csv":
             raw_data = np.loadtxt(filename, delimiter=",")
         else:
@@ -236,18 +243,25 @@ class LED:
         encoded_data = []
         
 
-        for raw_sample in raw_data:
-            encoded_sample = []
-            for i in range(np.shape(raw_sample)[-1]):
-                x = np.array([raw_sample[:, :, :, i]])
-                print(np.shape(x))
-                encoded_sample.append(encoder.predict(x))
-            encoded_data.append(encoded_sample)
+        for raw_sequence in raw_data:
+            for raw_sample in raw_sequence:
+                #print(np.shape(raw_sample))
+                #print(np.shape(raw_sequence))
+                #print(np.shape(raw_data))
+                #encoded_sample = []
+                #for i in range(np.shape(raw_sample)[-1]):
+                #    x = np.array([raw_sample[:, :, i]])
+                #    print(np.shape(x))
+                #    encoded_sample.append(encoder.predict(x))
+                #    encoded_data.append(encoded_sample)
+                
+                #TODO: togliere il verbose
+                encoded_data.append(encoder.predict(np.expand_dims(raw_sample,0)))
 
         return np.array(encoded_data)
  
 
-    def train_RNN(self, data_name, autoencoder_name=None, saving_name=None):
+    def train_RNN(self, data_name, autoencoder_name=None, parameters=NNParams(), saving_name=None):
 
         X = self.encode(data_name=data_name, autoencoder_name=autoencoder_name)[0][:-2] #take only first sample
         #Y = X[-1]
@@ -271,15 +285,10 @@ class LED:
         history = self.RNN.fit(
             X_train,
             Y_train,
-            batch_size=32,
-            epochs=1000,
-            validation_split=.2,
-            callbacks=[
-                tfk.callbacks.EarlyStopping(
-                    monitor='val_loss', patience=10, restore_best_weights=True),
-                tfk.callbacks.ReduceLROnPlateau(
-                    monitor='val_loss', patience=5, factor=0.5, min_lr=1e-5),
-            ]
+            batch_size=parameters.batch_size,
+            epochs=parameters.epochs,
+            validation_split=parameters.validation_split,
+            callbacks=parameters.callbacks
         ).history
 
         if saving_name is not None:

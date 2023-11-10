@@ -3,7 +3,8 @@ from tqdm.auto import tqdm
 import sys
 
 sys.path.append("..")
-from particle.generate_particle_parallel import GenerateParticle, Params
+from particle.generate_particle_parallel import GenerateParticle
+from utilities.params import Params
 from datagen_parallel import DataGen
 from multiprocessing import Pool
 from particle.thetamethod import ThetaMethod

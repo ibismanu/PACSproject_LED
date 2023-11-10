@@ -4,8 +4,8 @@ from scipy.optimize import newton, anderson
 import sys
 sys.path.append('..')
 from utilities.utils import check_butcher_sum, check_explicit_array
-from particle.generate_particle import GenerateParticle, Params
-
+from particle.generate_particle import GenerateParticle
+from utilities.params import Params
 
 class RungeKutta(GenerateParticle):
 
