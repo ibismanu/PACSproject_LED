@@ -70,7 +70,9 @@ class LED:
             input_shape[-1], kernel_size=(1, 1), strides=(1, 1), padding='same', activation=activation))
 
         for layer in conv:
-
+            
+            print(x)
+            
             E.append(tfkl.Conv2D(filters=layer[0], kernel_size=(layer[1], layer[1]), padding='same',
                      activation=activation, kernel_initializer=tfk.initializers.GlorotUniform(self.seed)))
             E.append(tfkl.MaxPool2D(pool_size=(2, 2)))
@@ -86,8 +88,16 @@ class LED:
         E.append(tfkl.Flatten())
 
         x = np.int32(x)
+        
+        dense_size = dense[0]//(x**2)
+        dense_size = dense_size*x*x
+        
+        
         D.insert(0, tfkl.Reshape((x, x, dense[0]//(x**2))))
 
+        E.append(tfkl.Dense(units=dense_size, activation=activation)) 
+        D.insert(0, tfkl.Dense(units=dense_size, activation=activation)) #to adjust dimensions for reshape
+        
         for layer in dense:
             E.append(tfkl.Dense(units=layer, activation=activation))
             E.append(tfkl.Dropout(dropout_rate, seed=self.seed))
