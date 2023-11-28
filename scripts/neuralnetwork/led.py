@@ -38,7 +38,7 @@ class LED:
 
         pass
 
-    # TODO: prendere dense e conv da file (o dalla classe NNParams???)
+    # TODO: prendere dense e conv da file 
     def build_autoencoder(self, input_shape, conv, dense, activation='relu', dropout_rate=0.2, verbose=True, loss=tfk.losses.MeanSquaredError(), optimizer=tfk.optimizers.Adam(), metrics=['mae']):
 
         # nel README: dense contiene i neuroni, conv contiene le coppie (filters, kernel size)
@@ -331,7 +331,7 @@ class LED:
         X_ae = []
         # for sample in range(np.shape(X_test)[0]):
         for t in range(np.shape(X_test)[1]):
-            X_ae.append(self.autoencoder.predict(np.expand_dims(X_test[0,t],0)))
+            X_ae.append(self.autoencoder.predict(np.expand_dims(X_test[0,t],0),verbose=0))
 
         error = X_test[0] - X_ae
 
