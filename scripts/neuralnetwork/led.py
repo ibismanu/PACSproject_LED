@@ -313,10 +313,8 @@ class LED:
     def test_autoencoder(self,autoencoder_dir, data_dir_test, compressed_name_test='arr_0',plot=False):
 
         # compressed_name_test requires the name you gave to the np.array when you saved it as a compressed file. By default is 'arr_0' ad the default name from the function np.savez_compressed 
-        # compressed_name_training is the same ad compressed_name_test but for the training set
         # autoencoder_dir don't need to specify the extension of the file
 
-        # TODO: dobbiamo controllare che anche il test sia dello stesso formato o lo diamo per scontato?
         if data_dir_test[-3:] == "npy":
             X_test = np.load(data_dir_test)
         elif data_dir_test[-3:] == "npz":
@@ -328,22 +326,27 @@ class LED:
 
         self.load_autoencoder(autoencoder_dir)
 
-        X_ae = []
-        # for sample in range(np.shape(X_test)[0]):
-        for t in range(np.shape(X_test)[1]):
-            X_ae.append(self.autoencoder.predict(np.expand_dims(X_test[0,t],0),verbose=0))
-
-        error = X_test[0] - X_ae
-
         grid_size = np.shape(X_test)[2]
         times = np.shape(X_test)[1]
-        samples = np.shape(X_test)[0]
+        n_samples = np.shape(X_test)[0]
         dim_u = np.shape(X_test)[-1]
+
+        X_ae = []
+        prediction_loss = []
+
+        # for sample in range(np.shape(X_test)[0]):
+        # qui per ora sto facendo il predict solo per il sample 0
+        for t in range(np.shape(X_test)[1]):
+            prediction = self.autoencoder.predict(np.expand_dims(X_test[0,t],0),verbose=0) 
+            X_ae.append(prediction)
+            prediction_loss.append(tfk.losses.mae(prediction,X_test[0,t]))
+
+        # error = X_test[0] - X_ae
 
         # TODO: se vogliamo il plot questo if va messo a posto
         if plot:
             # plot some signals in the diagonal of the grid
-            X_ae = np.reshape(X_ae,(samples,times,grid_size,grid_size,dim_u))
+            X_ae = np.reshape(X_ae,(n_samples,times,grid_size,grid_size,dim_u))
 
             for i in range(5):
                 fig,(ax1,ax2) = plt.subplots(2,1,figsize=(8, 6))
@@ -357,4 +360,4 @@ class LED:
                 plt.tight_layout()
                 plt.show()
 
-        return X_ae, error
+        return X_ae, prediction_loss
