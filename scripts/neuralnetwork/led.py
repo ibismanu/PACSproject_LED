@@ -172,7 +172,7 @@ class LED:
         if verbose:
             self.RNN.summary(expand_nested=True)
 
-    def train_autoencoder(self, data_dir, parameters=NNParams(), saving_dir=None, compressed_name = 'arr_0'):
+    def train_autoencoder(self, data_dir, ae_name, parameters=NNParams(), compressed_name = 'arr_0'):
 
         # saving_dir don't need to specify the extension
 
@@ -207,11 +207,11 @@ class LED:
             callbacks=parameters.callbacks
         ).history
 
-        if saving_dir is not None:
-            auto_json = self.autoencoder.to_json()
-            with open(saving_dir+'.json', 'w') as json_file:
-                json_file.write(auto_json)
-            self.autoencoder.save_weights(saving_dir+'.h5')
+        saving_dir = '../../models/' + ae_name + '/' + ae_name
+        auto_json = self.autoencoder.to_json()
+        with open(saving_dir+'.json', 'w') as json_file:
+            json_file.write(auto_json)
+        self.autoencoder.save_weights(saving_dir+'.h5')
 
     def load_autoencoder(self, ae_dir):
 
