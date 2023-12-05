@@ -55,7 +55,7 @@ class LED:
 
         E.append(tfkl.InputLayer(input_shape=(input_shape)))
         D.insert(0, tfkl.Conv2DTranspose(
-            input_shape[-1], kernel_size=(1, 1), strides=(1, 1), padding='same', activation=activation))
+            input_shape[-1], kernel_size=(1, 1), strides=(1, 1), padding='same', activation='linear'))
 
         for layer in conv:
             
@@ -240,28 +240,25 @@ class LED:
 
         encoded_data = []
         
+        raw_data = raw_data.reshape(raw_data.shape[0]*raw_data.shape[1],raw_data.shape[2],raw_data.shape[3],raw_data.shape[4])
+        
+        
+        encoded_data = encoder.predict(raw_data,verbose=0)
 
-        for raw_sequence in raw_data:
-            for raw_sample in raw_sequence:
-                #print(np.shape(raw_sample))
-                #print(np.shape(raw_sequence))
-                #print(np.shape(raw_data))
-                #encoded_sample = []
-                #for i in range(np.shape(raw_sample)[-1]):
-                #    x = np.array([raw_sample[:, :, i]])
-                #    print(np.shape(x))
-                #    encoded_sample.append(encoder.predict(x))
-                #    encoded_data.append(encoded_sample)
-                
-                #TODO: togliere il verbose
-                encoded_data.append(encoder.predict(np.expand_dims(raw_sample,0)))
-
-        return np.array(encoded_data)
+        np.save('../../dataset/encoded_data.npy', encoded_data) 
  
 
-    def train_RNN(self, data_dir, autoencoder_name=None, parameters=NNParams(), saving_name=None):
+    def train_RNN(self, data_dir, autoencoder_name=None, compressed_name='arr_0', parameters=NNParams(), saving_name=None):
 
-        X = self.encode(data_name=data_dir, autoencoder_name=autoencoder_name)[0][:-2] #take only first sample
+        #X = self.encode(data_name=data_dir, autoencoder_name=autoencoder_name)[0][:-2] #take only first sample
+        if data_dir[-4:] == ".npy":
+            X = np.load(data_dir)
+        elif data_dir[-4:] == ".npz":
+            X = np.load(data_dir)[compressed_name]
+        elif data_dir[-4:] == ".csv":
+            X = np.loadtxt(data_dir, delimiter=",")
+        else:
+            raise ValueError("File type not supported")
         #Y = X[-1]
         
         #dim_x: (latent_dim, timesteps, nsample)
@@ -296,19 +293,6 @@ class LED:
                 json_file.write(auto_json)
             self.RNN.save_weights(saving_file+'.h5')
             
-        # 0 1 2 3 4 5 6 - -
-    
-        # 10 11 12 13 14 15 16
-        
-        
-        # 0 1 2 | 3
-        # 1 2 3 | 4
-        # 2 3 4 | 5
-        # 3 4 5 | 6
-        # 10 11 12 | 13
-        # 11 12 13 | 14
-        # 12 13 14 | 15
-        # 13 14 15 | 16
         
     def test_autoencoder(self,autoencoder_dir, data_dir_test, compressed_name_test='arr_0',plot=False):
 
@@ -361,3 +345,5 @@ class LED:
                 plt.show()
 
         return X_ae, prediction_loss
+
+
