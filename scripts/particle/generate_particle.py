@@ -1,61 +1,57 @@
-from abc import ABC, abstractmethod
 import numpy as np
 import matplotlib.pyplot as plt
 
-import sys
-sys.path.append('..')
-from utilities.params import Params,ODEParams,PDEParams
+from abc import ABC, abstractmethod
 
+from scripts.utils.utils import to_numpy
 
 
 class GenerateParticle(ABC):
-
-    eqtype: str
-
-    T: int
-    dt: float
-    num_it: int
-
-    u: np.array
-    t: np.array
-
-    eqtype: str
-
-    def __init__(self, eqtype: str, params: Params):
-
+    def __init__(
+        self,
+        eqtype,
+        final_time,
+        time_step,
+        u0,
+        f=None,
+        mass_matrix=None,
+        forcing_term=None,
+        system_matrix=None,
+    ):
+        # ODE or PDE
         self.eqtype = eqtype
 
-        self.T = params.T
-        self.dt = params.dt
-        self.num_it = int(self.T/self.dt)
+        # Time parameters
+        self.dt = time_step
+        self.T = final_time
+        self.num_it = int(self.T / self.dt)
 
-        if self.T != self.num_it*self.dt:
-            self.T = self.num_it*self.dt
-            print('Final time reached: ', self.T)
+        if self.T != self.num_it * self.dt:
+            self.T = self.num_it * self.dt
+            print("Final time reached: ", self.T)
 
-        if eqtype == 'ODE':
-            # assert isinstance(params, ODEParams)
-            self.f = params.f
-            self.u = np.zeros((len(params.u0), self.num_it+1))
-        elif eqtype == 'PDE':
-            assert isinstance(params, PDEParams)
-            self.mass_matrix = params.mass_matrix
-            self.forcing_term = params.forcing_term
-            self.system_matrix = params.system_matrix
-            self.u = np.zeros((self.M.size()[0], self.num_it+1))
+        self.t = np.linspace(0, self.T, self.num_it + 1)
 
-        self.u[:, 0] = params.u0
+        if np.isscalar(u0):
+            u0 = np.array([u0])
 
-        self.t = np.linspace(0, self.T, self.num_it+1)
+        # Equation specific parameters
+        match eqtype:
+            case "ODE":
+                self.f = f
+                self.u = np.zeros((len(u0), self.num_it + 1))
+            case "PDE":
+                # TODO
+                pass
+            case _:
+                print("Wrong equation type. Please write 'PDE' or 'ODE'")
 
-    @classmethod
-    def from_file(cls):
-        pass
+        self.u[:, 0] = u0
 
     def generate(self):
-        if self.eqtype == 'ODE':
+        if self.eqtype == "ODE":
             return self.generateODE()
-        elif self.eqtype == 'PDE':
+        else:
             return self.generatePDE()
 
     @abstractmethod
@@ -69,23 +65,22 @@ class GenerateParticle(ABC):
     def reset(self):
         self.u[:, 1:] = np.zeros_like(self.u[:, 1:])
 
-    def save(self, filename):
-        np.save(file='../data/saved_particles'+filename, arr=self.u)
+    def save(self, name):
+        np.save(file="../data/saved_particles" + name, arr=self.u)
+
+    def set_f(self, f):
+        self.f = to_numpy(f)
 
     def plot_solution(self, exact_sol=None):
-
-        if exact_sol is not None:
-            u_ex = exact_sol(self.t)
-
         n_plots = len(self.u)
         fig, axs = plt.subplots(n_plots)
 
         for i in range(n_plots):
-            axs[i].plot(self.t, self.u[i, :], label='numerical solution')
+            axs[i].plot(self.t, self.u[i, :], label="numerical solution")
             if exact_sol is not None:
-                axs[i].plot(self.t, u_ex[i], linestyle='dashed',
-                            label="exact solution")
-            axs[i].set_title('component %f of the solution' % i)
+                u_ex = exact_sol(self.t)
+                axs[i].plot(self.t, u_ex[i], linestyle="dashed", label="exact solution")
+            axs[i].set_title("component %f of the solution" % i)
             axs[i].legend()
 
         fig.tight_layout()

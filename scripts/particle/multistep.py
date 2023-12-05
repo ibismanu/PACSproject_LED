@@ -1,65 +1,57 @@
 import numpy as np
 from math import factorial
 
-import sys
-sys.path.append('..')
 from particle.generate_particle import GenerateParticle
-from utilities.params import Params
-from utilities.utils import integral
+from utils.utils import integral
 
 
 class Multistep(GenerateParticle):
-
-    # multistep arrays
-    A: np.array
-    b: np.array
-
-    def __init__(self, eqtype: str, params: Params):
-        super().__init__(eqtype, params)
-
-        self.A = params.multi_A
-        self.b = params.multi_b
+    def __init__(self, A, b, *args, **kwargs):
+        self.A = A
+        self.b = b
+        super().__init__(*args, **kwargs)
 
 
-class AdamsBashforth(Multistep):
-
-    order: int
-
-    def __init__(self, eqtype: str, params: Params):
-        assert params.multi_order is not None
-
-        super().__init__(eqtype, params)
-
-        self.order = params.multi_order
-        self.b = np.zeros(self.order)
+class AdamsBashforth(GenerateParticle):
+    def __init__(self, order, *args, **kwargs):
+        self.order = order
+        super().__init__(*args, **kwargs)
+        self.b = np.zeros(order)
 
         def g(v, j):
-            return np.prod(np.array([v+i for i in range(self.order)])) / (v+j)
+            return np.prod(np.array([v + i for i in range(self.order)])) / (v + j)
 
-        for j in range(self.order):
-            self.b[self.order-j-1] = (1-2*(j % 2)) / (factorial(j) *
-                                                      factorial(self.order-j-1)) * integral(g, j, self.order)
+        for j in range(order):
+            self.b[self.order - j - 1] = (
+                (1 - 2 * (j % 2))
+                / (factorial(j) * factorial(self.order - j - 1))
+                * integral(g, j, self.order)
+            )
 
     def generateODE(self):
-        print(self.b)
         for n in range(self.order):
-            self.u[:, n+1] = self.u[:, n] + self.dt * \
-                self.f(self.u[:, n], self.t[n])
-        for k in range(self.num_it-self.order):
-            n = self.order+k
-            self.u[:, n+1] = self.u[:, n]
+            self.u[:, n + 1] = self.u[:, n] + self.dt * self.f(self.u[:, n], self.t[n])
+        for k in range(self.num_it - self.order):
+            n = self.order + k
+            self.u[:, n + 1] = self.u[:, n]
 
             for i in range(self.order):
-                self.u[:, n+1] += self.dt * self.b[i] * \
-                    self.f(self.u[:, k+1+i], self.t[k+1+i])
+                self.u[:, n + 1] += (
+                    self.dt
+                    * self.b[i]
+                    * self.f(self.u[:, k + 1 + i], self.t[k + 1 + i])
+                )
 
     def generatePDE(self):
+        # TODO
         pass
 
 
-class AdamsMoulton(Multistep):
+class AdamsMoulton(GenerateParticle):
+    # TODO
     pass
 
 
-class BDF(Multistep):
+class BDF(GenerateParticle):
+    # TODO
     pass

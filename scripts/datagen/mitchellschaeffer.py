@@ -1,154 +1,97 @@
 import numpy as np
-from tqdm.auto import tqdm
-import sys
-sys.path.append('..')
-from particle.generate_particle import GenerateParticle
-from datagen import DataGen
+import time
+from multiprocessing import Pool
+
+from scripts.datagen.datagen import DataGen
+from scripts.utils.utils import  to_numpy
+from scripts.utils.params import SolverParams
+from scripts.particle.thetamethod import ThetaMethod
+
+
+def f_temp(x):
+    return np.array([0])
+
 
 class MitchellSchaeffer(DataGen):
+    params: SolverParams
 
-    # TODO better names
-    k: float
-    alpha: float
-    epsilon: float
-    I: float
-    gamma: float
-    grid_size: tuple
-    x0: list
-
-    def __init__(self, solver: GenerateParticle,
-                 k: float, alpha: float, epsilon: float,
-                 I: float, gamma: float, grid_size: tuple):
-
-        n_particles = grid_size[0]*grid_size[1]
-
-        super().__init__(n_particles, solver)
-
+    def __init__(
+        self, eqtype, params, k, alpha, epsilon, I, gamma, grid_size, solver_name
+    ):
+        self.eqtype = eqtype
+        self.params = params
         self.k = k
         self.alpha = alpha
         self.epsilon = epsilon
         self.I = I
         self.gamma = gamma
         self.grid_size = grid_size
-        
-        self.sample = np.zeros((solver.num_it+1,grid_size[0],grid_size[1],len(solver.u)))
+        self.num_it = int(params.final_time / params.time_step)
 
-    def generate_sample(self, x0:list, plot=False):
+        self.sample = np.zeros(
+            (self.num_it + 1, grid_size[0], grid_size[1], len(params.u0))
+        )
 
-        #TODO metodo alternativo per calcolare I_app, griglia reale
-        # dato iniziale: velocità di propagazione della corrente
-        # t_begin = velocità*distanza
-        # t_end = velocità*distanza + length_t 
-        # loop sulla griglia per calcolare I_app
+        match solver_name:
+            case "thetamethod":
+                self.solver = ThetaMethod(
+                    eqtype=eqtype,
+                    final_time=params.final_time,
+                    time_step=params.time_step,
+                    u0=params.u0,
+                    f=f_temp,
+                    theta=params.theta,
+                    tol=params.tol,
+                )
+            case _:
+                pass
 
-        t_begin = 0.
-        delta_t = 20.
-        v = 0.05
-        length_t = 2
+    def generate_sample(self, name, x0=None, plot=False):
+        if x0 is None:
+            x0 = (np.random.uniform(0, 1), np.random.uniform(0, 1))
 
-    
-        for x in range(self.grid_size[0]):
-            for y in range(self.grid_size[1]):
-                distance = np.sqrt((x-x0[0])**2+(y-x0[1])**2)
-                t_begin = distance/v
-                t_end = t_begin+length_t
-                
+        t_begin = 0.0
+        v = 5e-3
+        length_t = 2.0
+
+        hx = 1.0 / self.grid_size[0]
+        hy = 1.0 / self.grid_size[1]
+
+        for i in range(self.grid_size[0]):
+            x = i * hx
+            for j in range(self.grid_size[1]):
+                y = j * hy
+
+                distance = np.sqrt((x - x0[0]) ** 2 + (y - x0[1]) ** 2)
+                t_begin = distance / v
+                t_end = t_begin + length_t
+
                 def f(u, t):
-                    I_app = self.I * \
-                        (t >= t_begin and t < t_end)
-                    res = [self.k*u[0]*(u[0] - self.alpha) * (1 - u[0]) - u[1] + I_app,
-                            self.epsilon*(u[0] - self.gamma*u[1])]
-                    return np.array(res)
-                
-                self.solver.f = f
+                    I_app = self.I * (t >= t_begin and t < t_end)
+                    return [
+                        self.k * u[0] * (u[0] - self.alpha) * (1 - u[0]) - u[1] + I_app,
+                        self.epsilon * (u[0] - self.gamma * u[1]),
+                    ]
+
+                self.solver.set_f(f)
                 self.solver.reset()
                 self.solver.generate()
                 if plot:
                     self.solver.plot_solution()
 
-                self.sample[:, x, y] = self.solver.u.transpose()
-    
-    
-        # current_explore = []
-        # explored = []
-        # future_explore = [(x0[0],x0[1],t_begin)]
-
-        # while future_explore:  # same as while future_explore != []
-        #     current_explore = future_explore
-        #     future_explore = []
-
-        #     for point in current_explore:
-        #         above = (point[0]-1, point[1], point[2]+delta_t)
-        #         below = (point[0]+1, point[1], point[2]+delta_t)
-        #         left = (point[0], point[1]-1, point[2]+delta_t)
-        #         right = (point[0], point[1]+1, point[2]+delta_t)
-
-        #         if above[0] >= 0 and (above[0], above[1]) not in explored and above not in future_explore:
-        #             future_explore.append(above)
-
-        #         if below[0] < self.grid_size[0] and (below[0], below[1]) not in explored and below not in future_explore:
-        #             future_explore.append(below)
-
-        #         if left[1] >= 0 and (left[0], left[1]) not in explored and left not in future_explore:
-        #             future_explore.append(left)
-
-        #         if right[1] < self.grid_size[1] and (right[0], right[1]) not in explored and right not in future_explore:
-        #             future_explore.append(right)
-
-        #         def f(u, t):
-        #             I_app = self.I * \
-        #                 (t >= point[2] and t < point[2]+length_t)
-        #             res = [self.k*u[0]*(u[0] - self.alpha) * (1 - u[0]) - u[1] + I_app,
-        #                     self.epsilon*(u[0] - self.gamma*u[1])]
-        #             return np.array(res)
-
-        #         self.solver.f = f
-        #         self.solver.reset()
-        #         self.solver.generate()
-        #         if plot:
-        #             self.solver.plot_solution()
-
-        #         self.sample[:, point[0], point[1]] = self.solver.u.transpose()
-        #         # forse sbagliato
-
-        #         explored.append((point[0], point[1]))
-
-        self.dataset.append(self.sample)
-
-    def generate_dataset(self, n_samples, filename, format='npy',plot=False):
-        for i in tqdm(range(n_samples)):
-            x0 = (np.random.randint(0,self.grid_size[0]),np.random.randint(0,self.grid_size[1]))  
-            self.generate_sample(x0,plot=plot)
-        self.save_dataset(filename, format)
+                self.sample[:,i,j] = self.solver.u.transpose()
 
 
+        self.save_sample(name)
 
+    def generate_dataset(self, num_samples, num_processes, x0=None, plot=False):
+        args = [("sample_" + str(i) + ".npy", x0, plot) for i in range(num_samples)]
 
+        start = time.perf_counter()
 
-# t_begin = 0.
-# delta_t = 20.
-# v = 0.05
-# length_t = 2
+        with Pool(processes=num_processes) as pool:
+            pool.starmap(self.generate_sample, args)
 
-# x0 = np.array([5.1,2.3])
-# grid_size = [10,10]
+        finish = time.perf_counter()
 
-# current_explore = []
-# explored = []
-# future_explore = [(x0[0],x0[1],t_begin)]
-
-# test = np.zeros(grid_size)
-
-
-# for x in range(grid_size[0]):
-#     for y in range(grid_size[1]):
-#         distance = np.sqrt((x-x0[0])**2+(y-x0[1])**2)
-#         t_begin = distance/v
-#         t_end = t_begin+length_t
-        
-#         test[x,y] = np.int32(t_begin)
-        
-
-# print(test)
-
-
+        print("Program finished in " + str(finish - start) + " seconds")
