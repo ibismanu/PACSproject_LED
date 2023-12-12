@@ -16,8 +16,8 @@ import matplotlib.pyplot as plt
 
 import sys
 sys.path.append('..')
-from utilities.utils import build_sequences
-from utilities.params import NNParams
+from utils import build_sequences
+from params import NNParams
 
 from tqdm.auto import tqdm
 
