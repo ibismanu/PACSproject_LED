@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.optimize import newton
 
-from scripts.particle.generate_particle import GenerateParticle
+from particle.generate_particle import GenerateParticle
 
 
 class ThetaMethod(GenerateParticle):

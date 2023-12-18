@@ -1,9 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
-
+import sys
 from abc import ABC, abstractmethod
 
-from scripts.utils.utils import to_numpy
+from utils.utils import to_numpy
 
 
 class GenerateParticle(ABC):

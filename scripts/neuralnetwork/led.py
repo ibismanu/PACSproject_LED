@@ -16,13 +16,12 @@ import matplotlib.pyplot as plt
 
 import sys
 sys.path.append('..')
-from utils import build_sequences
-from params import NNParams
+from utils.utils import build_sequences
+from utils.params import NNParams
 
 from tqdm.auto import tqdm
 
 # TODO IMPORTANTE: quando si salvano i dati, fare un trasposto per salvare (time, space)
-
 
 class LED:
 
@@ -32,10 +31,11 @@ class LED:
     autoencoder: tfk.Model
     RNN: tfk.Model
 
-    def __init__(self, latent_dim, seed=None):
+    def __init__(self, latent_dim, autoencoder_dir=None, seed=None):
         self.seed = seed
         self.latent_dim = latent_dim
-
+        if autoencoder_dir is not None:
+            self.load_autoencoder(autoencoder_dir)
         pass
 
     # TODO: prendere dense e conv da file 
@@ -160,10 +160,10 @@ class LED:
         output_layer = tfkl.Dense(
             units=self.latent_dim, activation=activation)(dropout)
 
-        decoder = self.autoencoder.get_layer('Decoder') 
-        decoder.trainable=False
+        #decoder = self.autoencoder.get_layer('Decoder') 
+        #decoder.trainable=False
         
-        output_layer = decoder(output_layer)
+        #output_layer = decoder(output_layer)
         
         self.RNN = tfk.Model(inputs=input_layer,
                              outputs=output_layer, name='model')
@@ -247,8 +247,7 @@ class LED:
 
         np.save('../../dataset/encoded_data.npy', encoded_data) 
  
-
-    def train_RNN(self, data_dir, autoencoder_name=None, compressed_name='arr_0', parameters=NNParams(), saving_name=None):
+    def train_RNN(self, data_dir, compressed_name='arr_0', parameters=NNParams(), saving_name=None):
 
         #X = self.encode(data_name=data_dir, autoencoder_name=autoencoder_name)[0][:-2] #take only first sample
         if data_dir[-4:] == ".npy":
@@ -261,17 +260,18 @@ class LED:
             raise ValueError("File type not supported")
         #Y = X[-1]
         
-        #dim_x: (latent_dim, timesteps, nsample)
+        #dim_x: (nsample, timesteps, latent_dim)
         
         # decoder = self.autoencoder.get_layer('Decoder')
         
-        X_train,Y_train = build_sequences(X[:,:,0])
+        X_train,Y_train = build_sequences(X[0,:,:],10)
         
-        for i in range(1,np.shape(X)[-1]):
-            X_temp,Y_temp = build_sequences(X[:,:,i])
+        for i in range(np.shape(X)[0]):
+            X_temp,Y_temp = build_sequences(X[i,:,:],10)
             
             X_train = np.concatenate((X_train,X_temp),0)
             Y_train = np.concatenate((Y_train,Y_temp),0)
+            print("round n°",i)
         
         # for i in range(Y_train.shape[0]):
         #     for j in range(Y_train.shape[1]):
@@ -292,8 +292,7 @@ class LED:
             with open(saving_file+'.json', 'w') as json_file:
                 json_file.write(auto_json)
             self.RNN.save_weights(saving_file+'.h5')
-            
-        
+    
     def test_autoencoder(self,autoencoder_dir, data_dir_test, compressed_name_test='arr_0',plot=False):
 
         # compressed_name_test requires the name you gave to the np.array when you saved it as a compressed file. By default is 'arr_0' ad the default name from the function np.savez_compressed 

@@ -1,3 +1,7 @@
+import tensorflow as tf
+tfk = tf.keras
+tfkl = tfk.layers
+
 class SolverParams:
     def __init__(
         self,
@@ -26,7 +30,7 @@ class SolverParams:
         self.multi_order = multi_order
 
 
-class MSParams:
+class FNParams:
     def __init__(
         self, eqtype, solver_params, k, alpha, epsilon, I, gamma, grid_size, solver_name
     ):
@@ -39,3 +43,22 @@ class MSParams:
         self.gamma = gamma
         self.grid_size = grid_size
         self.solver_name = solver_name
+
+class NNParams():
+    batch_size : int
+    epochs : int
+    validation_split : float
+    callbacks : list
+    
+    def __init__(self, batch_size=32, epochs=1000, validation_split=0.2, callbacks=None):
+        self.batch_size=batch_size
+        self.epochs=epochs
+        self.validation_split=validation_split
+        self.callbacks = callbacks
+        if callbacks is None:
+            self.callbacks=[
+                tfk.callbacks.EarlyStopping(
+                    monitor='val_loss', patience=10, restore_best_weights=True),
+                tfk.callbacks.ReduceLROnPlateau(
+                    monitor='val_loss', patience=5, factor=0.5, min_lr=1e-5),
+            ]

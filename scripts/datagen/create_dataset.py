@@ -1,8 +1,8 @@
 import numpy as np
 import os
 
-from scripts.datagen.mitchellschaeffer import MitchellSchaeffer
-from scripts.utils.params import MSParams, SolverParams
+from scripts.datagen.fitzhugnagumo import FitzhugNagumo
+from scripts.utils.params import SolverParams, FNParams
 
 
 def create_dataset(
@@ -15,7 +15,7 @@ def create_dataset(
     remove_samples=True,
 ):
     if generate:
-        MS = MitchellSchaeffer(
+        FN = FitzhugNagumo(
             eqtype=ms_params.eqtype,
             params=ms_params.solver_params,
             k=ms_params.k,
@@ -27,7 +27,7 @@ def create_dataset(
             solver_name=ms_params.solver_name,
         )
 
-        MS.generate_dataset(num_samples=num_samples, num_processes=num_processes)
+        FN.generate_dataset(num_samples=num_samples, num_processes=num_processes)
 
     if batch_size is None:
         batch_size = num_samples

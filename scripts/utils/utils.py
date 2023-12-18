@@ -39,3 +39,20 @@ def integral(g, j, p):
     nodes = 0.5 * (nodes + 1)
     weights = 0.5 * weights
     return np.sum(np.array([weights[i] * g(nodes[i], j) for i in range(deg)]))
+
+def build_sequences(data, window, stride=1, telescope=1):
+    #data should have shape (latent_dim, timesteps)
+    
+    assert window % stride == 0
+    
+    data = np.transpose(data)
+    
+    dataset = []
+    target = []
+        
+    for idx in np.arange(0,data.shape[1]-window-telescope,stride):
+        dataset.append(np.transpose(data[:,idx:idx+window]))
+        target.append(np.transpose(data[:,idx+window:idx+window+telescope]))
+    
+    return np.array(dataset),np.array(target)
+
