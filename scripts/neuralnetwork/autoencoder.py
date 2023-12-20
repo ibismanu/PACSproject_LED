@@ -56,9 +56,9 @@ class Autoencoder:
             self.load_model("models/" + name)
 
     def load_model(self, name):
-        path = "models/" + name + "/" + name + ".json"
+        path = "models/" + name + "/" + name
 
-        with open(path, "r") as json_file:
+        with open(path + ".json", "r") as json_file:
             auto_json = json_file.read()
 
         self.autoencoder = tfk.models.model_from_json(auto_json)
@@ -189,7 +189,7 @@ class Autoencoder:
         file_path = "models/" + name + "/" + name
         if not os.path.exists(file_path):
             os.makedirs(file_path)
-            
+
         auto_json = self.autoencoder.to_json()
         with open(file_path + ".json", "w") as json_file:
             json_file.write(auto_json)
@@ -197,4 +197,4 @@ class Autoencoder:
 
     def encode(self, raw_data):
         encoded_data = self.encoder.predict(raw_data, verbose=0)
-        np.save("dataset/encoded_data.npy")
+        np.save("dataset/encoded_data.npy", encoded_data)
