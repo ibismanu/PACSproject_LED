@@ -10,6 +10,7 @@ tfkl = tfk.layers
 class RNN:
     def __init__(
         self,
+        name=None,
         lstm=[(32, False), (16, True), (32, False)],
         dense=[64, 32],
         seed=42,
@@ -70,7 +71,7 @@ class RNN:
         self.rnn = None
 
         # Data
-        self.data = None
+        self.raw_data = None
         self.X_train = None
         self.Y_train = None
 
@@ -116,38 +117,54 @@ class RNN:
                 loss=self.loss, optimizer=self.optimizer, metrics=self.metrics
             )
 
-    def get_data(self, name, compressed_name="arr_0"):
+    def get_data(self, name, compressed_name="arr_0", to_split=False, split_ratio=0.2):
         match name[-4:]:
             case ".npy":
-                raw_data = np.load("dataset/" + name)
+                self.raw_data = np.load("dataset/" + name)
             case ".npz":
-                raw_data = np.load("dataset/" + name)[compressed_name]
+                self.raw_data = np.load("dataset/" + name)[compressed_name]
             case ".csv":
-                raw_data = np.loadtxt("dataset/" + name, delimiter=",")
+                self.raw_data = np.loadtxt("dataset/" + name, delimiter=",")
             case _:
                 raise ValueError("File type not supported")
-
-        # CI SERVE UN SOLO SAMPLE
-
-        raw_data = raw_data.T
-
-        self.X_train, self.Y_train = self.build_sequences(raw_data)
+            
+    # def split():
 
     def build_sequences(self, raw_data):
         X = []
         Y = []
 
-        raw_data = np.transpose(raw_data)
+        # dim(raw_data) = (timesteps,latend_dim)
 
         for idx in np.arange(
             0, raw_data.shape[0] - self.window - self.telescope, self.stride
         ):
-            X.append(raw_data[idx : idx + self.window])
-            Y.append(raw_data[idx + self.window : idx + self.window + self.telescope])
+            X.append(raw_data[idx : idx + self.window,:])
+            Y.append(raw_data[idx + self.window : idx + self.window + self.telescope,:])
 
         return np.array(X), np.array(Y)
 
-    def train_model(self):
+    def train_model(self,raw_data):
+
+        # dim = (n_samples, timesteps, latent_dim)
+
+        # cycle over samples        
+        for i in range(np.shape(raw_data)[0]):
+            X_temp,Y_temp = self.build_sequences(raw_data[i,:,:],self.window)
+            
+            if i == 0:
+                X_train = X_temp
+                Y_train = Y_temp
+
+            else:
+                X_train = np.concatenate((X_train,X_temp),0)
+                Y_train = np.concatenate((Y_train,Y_temp),0)
+            # print("round n°",i)
+        
+        self.X_train = X_train
+        self.Y_train = Y_train
+
+
         history = self.rnn.fit(
             self.X_train,
             self.Y_train,
@@ -156,3 +173,64 @@ class RNN:
             validation_split=self.validation_split,
             callbacks=self.callbacks,
         )
+
+        if self.name is not None:
+            
+            saving_dir = '../../models/' + self.name + '/' + self.name
+            auto_json = self.RNN.to_json()
+            with open(saving_dir+'.json', 'w') as json_file:
+                json_file.write(auto_json)
+            self.RNN.save_weights(saving_dir+'.h5')
+
+    def load_rnn(self, RNN_dir):
+
+        with open(RNN_dir+'.json', 'r') as json_file:
+            auto_json = json_file.read()
+        self.rnn = tfk.models.model_from_json(auto_json)
+        self.rnn.load_weights(RNN_dir+'.h5')    
+
+    def test_rnn(self, rnn_dir, data_dir_test, compressed_name='arr_0'):
+            
+        self.get_data(data_dir_test,compressed_name=compressed_name)
+
+        self.load_rnn(RNN_dir=rnn_dir)
+
+        X_test,Y_test = self.build_sequences(self.raw_data[0,:,:]) # facciamo il test solo sul primo sample
+        
+        for seq in range(np.shape(X_test)[0]):
+            prediction = self.rnn.predict(np.expand_dims(X_test[seq,:],0),verbose=0)
+            if seq==0:
+                print(np.shape(prediction), np.shape(Y_test[seq,:]))
+                X_RNN = prediction
+                prediction_loss = np.array([np.linalg.norm(prediction-Y_test[seq,:],2)])
+            else:
+                X_RNN = np.concatenate((X_RNN,prediction), axis=0)
+                prediction_loss = np.concatenate((prediction_loss,np.array([np.linalg.norm(prediction-Y_test[seq,:],2)])),axis=0)
+            print("prediction ",seq," of ", np.shape(X_test)[0])
+        return X_RNN, prediction_loss
+    
+    def predict_future(self, length, RNN_dir, starting_sequence, real_future=None):
+        #starting sequence dim: (window, latent_dim)
+        
+        self.load_rnn(RNN_dir)
+        
+        future = np.array([])
+        X_temp = starting_sequence
+        
+        for reg in range(length):
+            pred_temp = self.rnn.predict(np.expand_dims(X_temp,0),verbose=0)
+            if(len(future)==0):
+                future = pred_temp
+                print(np.shape(pred_temp))
+            else:
+                future = np.concatenate((future,pred_temp),axis=0)
+            X_temp = np.concatenate((X_temp[1:,:],pred_temp), axis=0)
+            print("prediction ",reg," of ", length)
+        
+        future_err = None
+        # if real_future is not None:
+        #     future_err = np.array([])
+        #     for i in range(length):
+        #         future_err.append(tfk.losses.mse(future[:,i],real_future[i,:]))
+        
+        return future, future_err
