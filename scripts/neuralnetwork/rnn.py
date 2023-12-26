@@ -15,7 +15,6 @@ class RNN:
         dense=[64, 32],
         seed=42,
         latent_dim=40,
-        time_steps=1001,
         activation="relu",
         dropout_rate=0.4,
         loss=tfk.losses.MeanSquaredError(),
@@ -39,10 +38,6 @@ class RNN:
         # Seed
         self.seed = seed
 
-        # Input shape (time, latent_dim)
-        self.input_shape = (time_steps, latent_dim)
-        self.output_shape = latent_dim
-
         # LSTM layers (units: int, bidirectional: bool)
         self.lstm = lstm
 
@@ -64,8 +59,12 @@ class RNN:
         # Training parameters
         self.batch_size = batch_size
         self.epochs = epochs
-        self.validation_split = (validation_split,)
+        self.validation_split = validation_split
         self.callbacks = callbacks
+
+        # Input shape (window, latent_dim)
+        self.input_shape = (self.window, latent_dim)
+        self.output_shape = latent_dim
 
         # Model
         self.rnn = None
@@ -74,6 +73,9 @@ class RNN:
         self.raw_data = None
         self.X_train = None
         self.Y_train = None
+
+        if name is not None:
+            self.load_model(name)
 
     def build_model(self, summary=False):
         # Input layer
@@ -127,7 +129,7 @@ class RNN:
                 self.raw_data = np.loadtxt("dataset/" + name, delimiter=",")
             case _:
                 raise ValueError("File type not supported")
-            
+
     # def split():
 
     def build_sequences(self, raw_data):
@@ -139,31 +141,31 @@ class RNN:
         for idx in np.arange(
             0, raw_data.shape[0] - self.window - self.telescope, self.stride
         ):
-            X.append(raw_data[idx : idx + self.window,:])
-            Y.append(raw_data[idx + self.window : idx + self.window + self.telescope,:])
+            X.append(raw_data[idx : idx + self.window, :])
+            Y.append(
+                raw_data[idx + self.window : idx + self.window + self.telescope, :]
+            )
 
         return np.array(X), np.array(Y)
 
-    def train_model(self,raw_data):
-
+    def train_model(self, raw_data):
         # dim = (n_samples, timesteps, latent_dim)
 
-        # cycle over samples        
+        # cycle over samples
         for i in range(np.shape(raw_data)[0]):
-            X_temp,Y_temp = self.build_sequences(raw_data[i,:,:],self.window)
-            
+            X_temp, Y_temp = self.build_sequences(raw_data[i, :, :], self.window)
+
             if i == 0:
                 X_train = X_temp
                 Y_train = Y_temp
 
             else:
-                X_train = np.concatenate((X_train,X_temp),0)
-                Y_train = np.concatenate((Y_train,Y_temp),0)
+                X_train = np.concatenate((X_train, X_temp), 0)
+                Y_train = np.concatenate((Y_train, Y_temp), 0)
             # print("round n°",i)
-        
+
         self.X_train = X_train
         self.Y_train = Y_train
-
 
         history = self.rnn.fit(
             self.X_train,
@@ -175,62 +177,71 @@ class RNN:
         )
 
         if self.name is not None:
-            
-            saving_dir = '../../models/' + self.name + '/' + self.name
+            saving_dir = "../../models/" + self.name + "/" + self.name
             auto_json = self.RNN.to_json()
-            with open(saving_dir+'.json', 'w') as json_file:
+            with open(saving_dir + ".json", "w") as json_file:
                 json_file.write(auto_json)
-            self.RNN.save_weights(saving_dir+'.h5')
+            self.RNN.save_weights(saving_dir + ".h5")
 
-    def load_rnn(self, RNN_dir):
+    def load_model(self, name):
+        path = "models/" + name + "/" + name
 
-        with open(RNN_dir+'.json', 'r') as json_file:
-            auto_json = json_file.read()
-        self.rnn = tfk.models.model_from_json(auto_json)
-        self.rnn.load_weights(RNN_dir+'.h5')    
+        with open(path + ".json", "r") as json_file:
+            rnn_json = json_file.read()
 
-    def test_rnn(self, rnn_dir, data_dir_test, compressed_name='arr_0'):
-            
-        self.get_data(data_dir_test,compressed_name=compressed_name)
+        self.rnn = tfk.models.model_from_json(rnn_json)
+        self.rnn.load_weights(path + ".h5")
+
+    def test_rnn(self, rnn_dir, data_dir_test, compressed_name="arr_0"):
+        self.get_data(data_dir_test, compressed_name=compressed_name)
 
         self.load_rnn(RNN_dir=rnn_dir)
 
-        X_test,Y_test = self.build_sequences(self.raw_data[0,:,:]) # facciamo il test solo sul primo sample
-        
+        X_test, Y_test = self.build_sequences(
+            self.raw_data[0, :, :]
+        )  # facciamo il test solo sul primo sample
+
         for seq in range(np.shape(X_test)[0]):
-            prediction = self.rnn.predict(np.expand_dims(X_test[seq,:],0),verbose=0)
-            if seq==0:
-                print(np.shape(prediction), np.shape(Y_test[seq,:]))
+            prediction = self.rnn.predict(np.expand_dims(X_test[seq, :], 0), verbose=0)
+            if seq == 0:
+                print(np.shape(prediction), np.shape(Y_test[seq, :]))
                 X_RNN = prediction
-                prediction_loss = np.array([np.linalg.norm(prediction-Y_test[seq,:],2)])
+                prediction_loss = np.array(
+                    [np.linalg.norm(prediction - Y_test[seq, :], 2)]
+                )
             else:
-                X_RNN = np.concatenate((X_RNN,prediction), axis=0)
-                prediction_loss = np.concatenate((prediction_loss,np.array([np.linalg.norm(prediction-Y_test[seq,:],2)])),axis=0)
-            print("prediction ",seq," of ", np.shape(X_test)[0])
+                X_RNN = np.concatenate((X_RNN, prediction), axis=0)
+                prediction_loss = np.concatenate(
+                    (
+                        prediction_loss,
+                        np.array([np.linalg.norm(prediction - Y_test[seq, :], 2)]),
+                    ),
+                    axis=0,
+                )
+            print("prediction ", seq, " of ", np.shape(X_test)[0])
         return X_RNN, prediction_loss
-    
-    def predict_future(self, length, RNN_dir, starting_sequence, real_future=None):
-        #starting sequence dim: (window, latent_dim)
-        
-        self.load_rnn(RNN_dir)
-        
+
+    def predict_future(self, length, starting_sequence, real_future=None):
+        # starting sequence dim: (window, latent_dim)
+
         future = np.array([])
         X_temp = starting_sequence
-        
+
         for reg in range(length):
-            pred_temp = self.rnn.predict(np.expand_dims(X_temp,0),verbose=0)
-            if(len(future)==0):
+            pred_temp = self.rnn.predict(np.expand_dims(X_temp, 0), verbose=0)
+            if len(future) == 0:
                 future = pred_temp
                 print(np.shape(pred_temp))
             else:
-                future = np.concatenate((future,pred_temp),axis=0)
-            X_temp = np.concatenate((X_temp[1:,:],pred_temp), axis=0)
-            print("prediction ",reg," of ", length)
-        
+                future = np.concatenate((future, pred_temp), axis=0)
+            X_temp = np.concatenate((X_temp[1:, :], pred_temp), axis=0)
+            print("prediction ", reg, " of ", length)
+
+        # TODO separate function
         future_err = None
         # if real_future is not None:
         #     future_err = np.array([])
         #     for i in range(length):
         #         future_err.append(tfk.losses.mse(future[:,i],real_future[i,:]))
-        
-        return future, future_err
+
+        return future #, future_err

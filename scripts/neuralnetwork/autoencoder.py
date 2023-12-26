@@ -11,7 +11,7 @@ tfkl = tfk.layers
 class Autoencoder:
     def __init__(
         self,
-        input_shape,
+        input_shape=None,  # TODO initialize
         latent_dim=40,
         conv=[(8, 3), (16, 3), (32, 3)],
         dense=[64, 128],
@@ -53,7 +53,7 @@ class Autoencoder:
         self.callbacks = callbacks
 
         if name is not None:
-            self.load_model("models/" + name)
+            self.load_model(name)
 
     def load_model(self, name):
         path = "models/" + name + "/" + name
@@ -195,6 +195,11 @@ class Autoencoder:
             json_file.write(auto_json)
         self.autoencoder.save_weights(file_path + ".h5")
 
-    def encode(self, raw_data):
+    def encode(self, raw_data, save=True):
         encoded_data = self.encoder.predict(raw_data, verbose=0)
-        np.save("dataset/encoded_data.npy", encoded_data)
+
+        if save:
+            np.save("dataset/encoded_data.npy", encoded_data)
+        else:
+            return encoded_data
+        return
