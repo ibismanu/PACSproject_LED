@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.optimize import newton, anderson
+import warnings
 
 from particle.generate_particle import GenerateParticle
 from utils.utils import check_butcher_sum, check_explicit_array
@@ -20,7 +21,8 @@ class RungeKutta(GenerateParticle):
 class RKExplicit(RungeKutta):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        check_explicit_array(self.A, semi=False)
+        if not check_explicit_array(self.A, semi=False):
+            warnings.warn('Explicit was called, but Implicit Butcher array was given')
 
     def generateODE(self):
         for n in range(self.num_it):
