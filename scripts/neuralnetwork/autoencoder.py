@@ -203,3 +203,53 @@ class Autoencoder:
         else:
             return encoded_data
         return
+    
+    def test_autoencoder(self, data_dir_test, compressed_name_test='arr_0', plot=False):
+
+        # compressed_name_test requires the name you gave to the np.array when you saved it as a compressed file. By default is 'arr_0' ad the default name from the function np.savez_compressed 
+        # autoencoder_dir don't need to specify the extension of the file
+
+        if data_dir_test[-3:] == "npy":
+            X_test = np.load(data_dir_test)
+        elif data_dir_test[-3:] == "npz":
+            X_test = np.load(data_dir_test)[compressed_name_test]
+        elif data_dir_test[-3:] == "csv":
+            X_test = np.loadtxt(data_dir_test, delimiter=",")
+        else:
+            raise ValueError("File type not supported")
+
+        grid_size = np.shape(X_test)[2]
+        times = np.shape(X_test)[1]
+        n_samples = np.shape(X_test)[0]
+        dim_u = np.shape(X_test)[-1]
+
+        X_ae = []
+        prediction_loss = []
+
+        # for s in range(n_samples):
+        # qui per ora sto facendo il predict solo per il sample 0
+        for t in range(times):
+            prediction = self.autoencoder.predict(np.expand_dims(X_test[0,t],0),verbose=0) 
+            X_ae.append(prediction)
+            prediction_loss.append(tfk.losses.mae(prediction,X_test[0,t]))
+
+        # error = X_test[0] - X_ae
+
+        # # TODO: se vogliamo il plot questo if va messo a posto
+        # if plot:
+        #     # plot some signals in the diagonal of the grid
+        #     X_ae = np.reshape(X_ae,(n_samples,times,grid_size,grid_size,dim_u))
+
+        #     for i in range(5):
+        #         fig,(ax1,ax2) = plt.subplots(2,1,figsize=(8, 6))
+
+        #         ax1.plot(np.arange(0,np.shape(X_test)[1],1), X_ae[0, :, i, i, 0])
+        #         ax1.set_title('Predicted')
+
+        #         ax2.plot(np.arange(0,np.shape(X_test)[1],1), X_test[0, :, i, i, 0])
+        #         ax2.set_title('Test')
+
+        #         plt.tight_layout()
+        #         plt.show()
+
+        return X_ae, prediction_loss

@@ -32,9 +32,8 @@ class SolverParams:
 
 class FNParams:
     def __init__(
-        self, eqtype, solver_params, k, alpha, epsilon, I, gamma, grid_size, solver_name
+        self, solver_params, k, alpha, epsilon, I, gamma, grid_size, solver_name
     ):
-        self.eqtype = eqtype
         self.solver_params = solver_params
         self.k = k
         self.alpha = alpha

@@ -1,9 +1,8 @@
 import numpy as np
 from scipy.optimize import newton, anderson
-import warnings
 
-from particle.generate_particle import GenerateParticle
-from utils.utils import check_butcher_sum, check_explicit_array
+from scripts.particle.generate_particle import GenerateParticle
+from scripts.utils.utils import check_butcher_sum, check_explicit_array
 
 
 class RungeKutta(GenerateParticle):
@@ -21,8 +20,8 @@ class RungeKutta(GenerateParticle):
 class RKExplicit(RungeKutta):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if not check_explicit_array(self.A, semi=False):
-            warnings.warn('Explicit was called, but Implicit Butcher array was given')
+        is_explicit = check_explicit_array(self.A, semi=False)
+        assert is_explicit, "explicit was called, but implicit Butcher array was given"
 
     def generateODE(self):
         for n in range(self.num_it):
@@ -33,11 +32,6 @@ class RKExplicit(RungeKutta):
                     self.t[n] + self.dt * self.c[i],
                 )
                 self.u[:, n + 1] = self.u[:, n] + self.dt * np.dot(self.b, k)
-
-    def generatePDE(self):
-        # TODO
-        pass
-
 
 class RKSemiImplicit(RungeKutta):
     def __init__(self, *args, **kwargs):
@@ -70,11 +64,6 @@ class RKSemiImplicit(RungeKutta):
 
             self.u[:, n + 1] = self.u[:, n] + self.dt * np.dot(self.b, k)
 
-    def generatePDE(self):
-        # TODO
-        pass
-
-
 class RKImplicit(RungeKutta):
     def generateODE(self):
         tol = 1e-2
@@ -95,11 +84,6 @@ class RKImplicit(RungeKutta):
             k = newton(g, x0=k_tmp, tol=size * tol)
 
             self.u[:, n + 1] = self.u[:, n] + self.dt * np.dot(self.b, k)
-
-    def generatePDE(self):
-        # TODO
-        pass
-
 
 class RKHeun(RKExplicit):
     def __init__(self, *args, **kwargs):

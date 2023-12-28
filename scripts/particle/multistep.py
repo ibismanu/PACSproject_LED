@@ -1,8 +1,8 @@
 import numpy as np
 from math import factorial
 
-from particle.generate_particle import GenerateParticle
-from utils.utils import integral
+from scripts.particle.generate_particle import GenerateParticle
+from scripts.utils.utils import integral
 
 
 class Multistep(GenerateParticle):
@@ -41,11 +41,6 @@ class AdamsBashforth(GenerateParticle):
                     * self.b[i]
                     * self.f(self.u[:, k + 1 + i], self.t[k + 1 + i])
                 )
-
-    def generatePDE(self):
-        # TODO
-        pass
-
 
 class AdamsMoulton(GenerateParticle):
     # TODO

@@ -1,30 +1,25 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import sys
 from abc import ABC, abstractmethod
 
-from utils.utils import to_numpy
+from scripts.utils.utils import to_numpy
 
 
 class GenerateParticle(ABC):
     def __init__(
         self,
-        eqtype,
         final_time,
         time_step,
         u0,
-        f=None,
-        mass_matrix=None,
-        forcing_term=None,
-        system_matrix=None,
+        f=None
     ):
-        # ODE or PDE
-        self.eqtype = eqtype
 
         # Time parameters
         self.dt = time_step
         self.T = final_time
         self.num_it = int(self.T / self.dt)
+        self.f = f
+        self.u = np.zeros((len(u0), self.num_it + 1))
 
         if self.T != self.num_it * self.dt:
             self.T = self.num_it * self.dt
@@ -35,31 +30,10 @@ class GenerateParticle(ABC):
         if np.isscalar(u0):
             u0 = np.array([u0])
 
-        # Equation specific parameters
-        match eqtype:
-            case "ODE":
-                self.f = f
-                self.u = np.zeros((len(u0), self.num_it + 1))
-            case "PDE":
-                # TODO
-                pass
-            case _:
-                print("Wrong equation type. Please write 'PDE' or 'ODE'")
-
         self.u[:, 0] = u0
-
-    def generate(self):
-        if self.eqtype == "ODE":
-            return self.generateODE()
-        else:
-            return self.generatePDE()
 
     @abstractmethod
     def generateODE(self):
-        pass
-
-    @abstractmethod
-    def generatePDE(self):
         pass
 
     def reset(self):
