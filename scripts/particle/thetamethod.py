@@ -5,10 +5,10 @@ from scripts.particle.generate_particle import GenerateParticle
 
 
 class ThetaMethod(GenerateParticle):
-    def __init__(self, theta, tol, *args, **kwargs):
-        self.theta = theta
-        self.tol = tol
-        super().__init__(*args, **kwargs)
+    def __init__(self, params,f):
+        self.theta = params.theta
+        self.tol = params.tol
+        super().__init__(params,f)
 
     def generateODE(self):
         for n in range(self.num_it):

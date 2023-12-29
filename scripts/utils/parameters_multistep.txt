@@ -1,0 +1,5 @@
+T=6.3
+dt=0.02
+u0=[1,1]
+solver=AdamsBashforth
+order=4

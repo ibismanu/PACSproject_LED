@@ -1,4 +1,6 @@
 import tensorflow as tf
+import numpy as np
+import ast
 tfk = tf.keras
 tfkl = tfk.layers
 
@@ -29,6 +31,59 @@ class SolverParams:
         self.multi_b = multi_b
         self.multi_order = multi_order
 
+    def get_from_file(self,filedir):
+        
+        with open(filedir, 'r') as file:
+            lines = file.readlines()
+        values = []
+
+        for l in lines:
+            values.append(l.strip().split(sep='='))
+
+            if l[0]=='T':
+                self.final_time = float(values[-1][1])
+            if l[0:2]=='dt':
+                self.time_step = float(values[-1][1])
+            if l[0:2]=='u0':
+                self.u0 = ast.literal_eval(values[-1][1])
+        
+        if 'ThetaMethod' in lines[3]:
+            valid =  (lines[4][:5] == 'theta')
+            assert valid, "the value theta is missing, or the format is incorrect"
+            valid =  (lines[5][:3] == 'tol')
+            assert valid, "the tolerance is missing, or the format is incorrect"
+            self.theta = float(values[4][1])
+            self.tol = float(values[5][1])
+
+        if 'RungeKutta' in lines[3]:
+            valid = (lines[4][0] == 'A')
+            assert valid, "the matrix A is missing, or the format is incorrect"
+            valid = (lines[5][0] == 'b')
+            assert valid, "the vector b is missing, or the format is incorrect"
+            valid = (lines[6][0] == 'c')
+            assert valid, "the vector b is missing, or the format is incorrect"
+
+            str_numbers = lines[4][2:] 
+            components = str_numbers.rstrip('\n').split(' ')
+            components_ = [ast.literal_eval(num) for num in components]
+            arr = np.array(components_, dtype=np.float32)
+            self.RK_A = arr
+
+            str_numbers = ast.literal_eval(lines[5][2:])
+            arr = np.array(str_numbers, dtype=np.float32)
+            self.RK_b = arr
+
+            str_numbers = ast.literal_eval(lines[6][2:]) 
+            arr = np.array(str_numbers, dtype=np.float32)
+            self.RK_c = arr
+
+        if 'AdamsBashforth' in lines[3]:
+            valid = (lines[4][:5] == 'order')
+            assert valid, "the order is missing, or the format is incorrect"
+
+            self.multi_order = int(lines[4][6:])
+
+        
 
 class FNParams:
     def __init__(
@@ -42,22 +97,3 @@ class FNParams:
         self.gamma = gamma
         self.grid_size = grid_size
         self.solver_name = solver_name
-
-class NNParams():
-    batch_size : int
-    epochs : int
-    validation_split : float
-    callbacks : list
-    
-    def __init__(self, batch_size=32, epochs=1000, validation_split=0.2, callbacks=None):
-        self.batch_size=batch_size
-        self.epochs=epochs
-        self.validation_split=validation_split
-        self.callbacks = callbacks
-        if callbacks is None:
-            self.callbacks=[
-                tfk.callbacks.EarlyStopping(
-                    monitor='val_loss', patience=10, restore_best_weights=True),
-                tfk.callbacks.ReduceLROnPlateau(
-                    monitor='val_loss', patience=5, factor=0.5, min_lr=1e-5),
-            ]
