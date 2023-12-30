@@ -2,7 +2,8 @@ import numpy as np
 from tqdm.auto import tqdm
 import os
 
-import tensorflow as tf
+from scripts.utils.utils import import_tensorflow
+tf = import_tensorflow()
 
 tfk = tf.keras
 tfkl = tfk.layers
@@ -198,8 +199,23 @@ class Autoencoder:
     def encode(self, raw_data, save=True):
         encoded_data = self.encoder.predict(raw_data, verbose=0)
 
+        # for snapshot in raw_data:
+        #     encoded_data.append(self.encoder.predict(snapshot))
+
+        # encoded_data = np.array(encoded_data)
+
         if save:
             np.save("dataset/encoded_data.npy", encoded_data)
         else:
             return encoded_data
         return
+    
+    def decode(self, encoded_data, save=True):
+        decoded_data = self.decoder.predict(encoded_data, verbose=0)
+
+        # for snapshot in raw_data:
+        #     encoded_data.append(self.encoder.predict(snapshot))
+
+        # encoded_data = np.array(encoded_data)
+
+        return decoded_data

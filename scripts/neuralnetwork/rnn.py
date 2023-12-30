@@ -1,4 +1,5 @@
 import numpy as np
+import os
 from scripts.utils.utils import import_tensorflow
 
 tf = import_tensorflow()  # elimina warning inutili
@@ -10,238 +11,211 @@ tfkl = tfk.layers
 class RNN:
     def __init__(
         self,
-        name=None,
-        lstm=[(32, False), (16, True), (32, False)],
-        dense=[64, 32],
+        model_name=None,
         seed=42,
-        latent_dim=40,
+        window_size=150,
+        lstm=[64, 128, 256],
+        bidirectional=True,
+        batch_norm=True,
+        dropout_rate=0.0,
+        dense=[256, 128, 64],
         activation="relu",
-        dropout_rate=0.4,
-        loss=tfk.losses.MeanSquaredError(),
-        optimizer=tfk.optimizers.Adam(),
-        metrics=["mae"],
-        window=10,
-        stride=1,
-        telescope=1,
-        batch_size=16,
-        epochs=1000,
+        optimizer="adam",
+        loss="mae",
+        batch_size=64,
         validation_split=0.2,
-        callbacks=[
-            tfk.callbacks.EarlyStopping(
-                monitor="val_loss", patience=10, restore_best_weights=True
-            ),
-            tfk.callbacks.ReduceLROnPlateau(
-                monitor="val_loss", patience=5, factor=0.5, min_lr=1e-5
-            ),
-        ],
+        callbacks=None,
+        metrics=[],
+        epochs=200,
     ):
-        # Seed
+        if model_name is not None:
+            self.load_model(model_name)
+
         self.seed = seed
 
-        # LSTM layers (units: int, bidirectional: bool)
+        self.window_size = window_size
+
         self.lstm = lstm
-
-        # Dense layers
         self.dense = dense
-
-        # RNN parameters
-        self.activation = activation
+        self.bidirectional = bidirectional
+        self.batch_norm = batch_norm
         self.dropout_rate = dropout_rate
-        self.loss = loss
+        self.activation = activation
+
         self.optimizer = optimizer
-        self.metrics = metrics
+        self.loss = loss
 
-        # Sequences parameters
-        self.window = window - window % stride
-        self.stride = stride
-        self.telescope = telescope
-
-        # Training parameters
         self.batch_size = batch_size
-        self.epochs = epochs
         self.validation_split = validation_split
         self.callbacks = callbacks
+        self.epochs = epochs
+        self.metrics = metrics
 
-        # Input shape (window, latent_dim)
-        self.input_shape = (self.window, latent_dim)
-        self.output_shape = latent_dim
+    def load_model(self, model_name):
+        path = "models/" + model_name + "/" + model_name
 
-        # Model
-        self.rnn = None
+        with open(path + ".json", "r") as json_file:
+            model_json = json_file.read()
 
-        # Data
-        self.raw_data = None
-        self.X_train = None
-        self.Y_train = None
+        self.rnn = tfk.models.model_from_json(model_json)
+        self.rnn.load_weights(path + ".h5")
 
-        if name is not None:
-            self.load_model(name)
+    def set_seed(self):
+        np.random.seed(self.seed)
+        tf.random.set_seed(self.seed)
+        tfk.utils.set_random_seed(self.seed)
 
-    def build_model(self, summary=False):
-        # Input layer
-        input_layer = tfkl.Input(shape=self.input_shape, name="Input")
-        x = input_layer
-
-        # LSTM layer
-        for layer in self.lstm[:-1]:
-            if layer[1]:
-                x = tfkl.Bidirectional(
-                    tfkl.LSTM(units=layer[0], return_sequences=True)
-                )(x)
-            else:
-                x = tfkl.LSTM(units=layer[0], return_sequences=True)(x)
-            x = tfkl.Dropout(rate=self.dropout_rate, seed=self.seed)(x)
-
-        # Last LSTM layer
-        layer = self.lstm[-1]
-        if layer[1]:
-            x = tfkl.Bidirectional(tfkl.LSTM(units=layer[0]))(x)
-        else:
-            x = tfkl.LSTM(units=layer[0])(x)
-        x = tfkl.Dropout(rate=self.dropout_rate, seed=self.seed)(x)
-
-        # Dense layers
-        for layer in self.dense:
-            x = tfkl.Dense(units=layer, activation=self.activation)(x)
-            x = tfkl.Dropout(rate=0.5 * self.dropout_rate, seed=self.seed)(x)
-
-        output_layer = tfkl.Dense(units=self.output_shape, activation="linear")(x)
-
-        # Build model
-        self.rnn = tfk.Model(inputs=input_layer, outputs=output_layer, name="RNN")
-
-        # Print model
-        if summary:
-            self.rnn.summary(expand_nested=True)
-
-            # Compile model
-            self.rnn.compile(
-                loss=self.loss, optimizer=self.optimizer, metrics=self.metrics
-            )
-
-    def get_data(self, name, compressed_name="arr_0", to_split=False, split_ratio=0.2):
-        match name[-4:]:
+    def get_data(self, file_name, compressed_name="arr_0"):
+        match file_name[-4:]:
             case ".npy":
-                self.raw_data = np.load("dataset/" + name)
+                data = np.load("dataset/" + file_name)
             case ".npz":
-                self.raw_data = np.load("dataset/" + name)[compressed_name]
+                data = np.load("dataset/" + file_name)[compressed_name]
             case ".csv":
-                self.raw_data = np.loadtxt("dataset/" + name, delimiter=",")
+                data = np.loadtxt("dataset/" + file_name, delimiter=",")
             case _:
                 raise ValueError("File type not supported")
 
-    # def split():
+        self.X_train = []
+        self.y_train = []
 
-    def build_sequences(self, raw_data):
-        X = []
-        Y = []
+        for ts in range(data.shape[0]):
+            time_series = data[ts]
+            for i in range(len(time_series) - self.window_size):
+                self.X_train.append(time_series[i : i + self.window_size])
+                self.y_train.append(time_series[i + self.window_size])
 
-        # dim(raw_data) = (timesteps,latend_dim)
+        self.X_train = np.array(self.X_train)
+        self.y_train = np.array(self.y_train)
 
-        for idx in np.arange(
-            0, raw_data.shape[0] - self.window - self.telescope, self.stride
-        ):
-            X.append(raw_data[idx : idx + self.window, :])
-            Y.append(
-                raw_data[idx + self.window : idx + self.window + self.telescope, :]
+        self.X_train = self.X_train.reshape(
+            self.X_train.shape[0], self.window_size, data.shape[2]
+        )
+
+    def build_model(self, summary=False):
+        self.rnn = tfk.Sequential()
+
+        # First LSTM layer
+        if self.bidirectional:
+            self.rnn.add(
+                tfkl.Bidirectional(
+                    tfkl.LSTM(
+                        units=self.lstm[0],
+                        return_sequences=(len(self.lstm) > 1),
+                        input_shape=(self.X_train.shape[1], self.X_train.shape[2]),
+                    )
+                )
+            )
+        else:
+            self.rnn.add(
+                tfkl.LSTM(
+                    units=self.lstm[0],
+                    return_sequences=(len(self.lstm) > 1),
+                    input_shape=(self.X_train.shape[1], self.X_train.shape[2]),
+                )
             )
 
-        return np.array(X), np.array(Y)
+        if self.batch_norm:
+            self.rnn.add(tfkl.BatchNormalization())
 
-    def train_model(self, raw_data):
-        # dim = (n_samples, timesteps, latent_dim)
-
-        # cycle over samples
-        for i in range(np.shape(raw_data)[0]):
-            X_temp, Y_temp = self.build_sequences(raw_data[i, :, :], self.window)
-
-            if i == 0:
-                X_train = X_temp
-                Y_train = Y_temp
-
+        # Middle LSTM layers
+        for l in self.lstm[1:-1]:
+            if self.bidirectional:
+                self.rnn.add(
+                    tfkl.Bidirectional(
+                        tfkl.LSTM(
+                            units=l,
+                            return_sequences=True,
+                        )
+                    )
+                )
             else:
-                X_train = np.concatenate((X_train, X_temp), 0)
-                Y_train = np.concatenate((Y_train, Y_temp), 0)
-            # print("round n°",i)
+                self.rnn.add(
+                    tfkl.LSTM(
+                        units=l,
+                        return_sequences=True,
+                    )
+                )
 
-        self.X_train = X_train
-        self.Y_train = Y_train
+            if self.batch_norm:
+                self.rnn.add(tfkl.BatchNormalization())
 
-        history = self.rnn.fit(
+        # Last LSTM layer
+        if self.bidirectional:
+            self.rnn.add(
+                tfkl.Bidirectional(
+                    tfkl.LSTM(
+                        units=self.lstm[-1],
+                    )
+                )
+            )
+        else:
+            self.rnn.add(
+                tfkl.LSTM(
+                    units=self.lstm[-1],
+                )
+            )
+
+        # Dense layers
+        for d in self.dense:
+            self.rnn.add(tfkl.Dense(units=d, activation=self.activation))
+            if self.batch_norm:
+                self.rnn.add(tfkl.BatchNormalization())
+            if self.dropout_rate > 0:
+                self.rnn.add(tfkl.Dropout(rate=self.dropout_rate))
+
+        # Output layer
+        self.rnn.add(tfkl.Dense(units=self.y_train.shape[-1]))
+
+        # Compile model
+        self.rnn.compile(
+            optimizer=self.optimizer,
+            loss=self.loss,
+            metrics=self.metrics,
+        )
+
+        if summary:
+            self.rnn.summary(expand_nested=True)
+
+    def save_model(self, name):
+        file_path = "models/" + name + "/" + name
+        if not os.path.exists(file_path):
+            os.makedirs(file_path)
+
+        model_json = self.rnn.to_json()
+        with open(file_path + ".json", "w") as json_file:
+            json_file.write(model_json)
+        self.rnn.save_weights(file_path + ".h5")
+
+    def train_model(self):
+        if self.callbacks is None:
+            self.callbacks = [
+                tfk.callbacks.EarlyStopping(
+                    monitor="val_loss", patience=10, restore_best_weights=True
+                )
+            ]
+
+        self.rnn.fit(
             self.X_train,
-            self.Y_train,
-            batch_size=self.batch_size,
+            self.y_train,
             epochs=self.epochs,
+            batch_size=self.batch_size,
             validation_split=self.validation_split,
             callbacks=self.callbacks,
         )
 
-        if self.name is not None:
-            saving_dir = "../../models/" + self.name + "/" + self.name
-            auto_json = self.RNN.to_json()
-            with open(saving_dir + ".json", "w") as json_file:
-                json_file.write(auto_json)
-            self.RNN.save_weights(saving_dir + ".h5")
+    def predict_future(self, starting_sequence, length):
+        forecast = []
+        last_sequence = starting_sequence
 
-    def load_model(self, name):
-        path = "models/" + name + "/" + name
+        for i in range(length):
+            prediction = self.rnn.predict(
+                last_sequence.reshape(
+                    1, last_sequence.shape[0], last_sequence.shape[1]
+                ),
+                verbose=0,
+            )
+            forecast.append(prediction[0])
+            last_sequence = np.concatenate((last_sequence[1:], prediction), axis=0)
 
-        with open(path + ".json", "r") as json_file:
-            rnn_json = json_file.read()
-
-        self.rnn = tfk.models.model_from_json(rnn_json)
-        self.rnn.load_weights(path + ".h5")
-
-    def test_rnn(self, rnn_dir, data_dir_test, compressed_name="arr_0"):
-        self.get_data(data_dir_test, compressed_name=compressed_name)
-
-        self.load_rnn(RNN_dir=rnn_dir)
-
-        X_test, Y_test = self.build_sequences(
-            self.raw_data[0, :, :]
-        )  # facciamo il test solo sul primo sample
-
-        for seq in range(np.shape(X_test)[0]):
-            prediction = self.rnn.predict(np.expand_dims(X_test[seq, :], 0), verbose=0)
-            if seq == 0:
-                print(np.shape(prediction), np.shape(Y_test[seq, :]))
-                X_RNN = prediction
-                prediction_loss = np.array(
-                    [np.linalg.norm(prediction - Y_test[seq, :], 2)]
-                )
-            else:
-                X_RNN = np.concatenate((X_RNN, prediction), axis=0)
-                prediction_loss = np.concatenate(
-                    (
-                        prediction_loss,
-                        np.array([np.linalg.norm(prediction - Y_test[seq, :], 2)]),
-                    ),
-                    axis=0,
-                )
-            print("prediction ", seq, " of ", np.shape(X_test)[0])
-        return X_RNN, prediction_loss
-
-    def predict_future(self, length, starting_sequence, real_future=None):
-        # starting sequence dim: (window, latent_dim)
-
-        future = np.array([])
-        X_temp = starting_sequence
-
-        for reg in range(length):
-            pred_temp = self.rnn.predict(np.expand_dims(X_temp, 0), verbose=0)
-            if len(future) == 0:
-                future = pred_temp
-                print(np.shape(pred_temp))
-            else:
-                future = np.concatenate((future, pred_temp), axis=0)
-            X_temp = np.concatenate((X_temp[1:, :], pred_temp), axis=0)
-            print("prediction ", reg, " of ", length)
-
-        # TODO separate function
-        future_err = None
-        # if real_future is not None:
-        #     future_err = np.array([])
-        #     for i in range(length):
-        #         future_err.append(tfk.losses.mse(future[:,i],real_future[i,:]))
-
-        return future #, future_err
+        return np.array(forecast)
