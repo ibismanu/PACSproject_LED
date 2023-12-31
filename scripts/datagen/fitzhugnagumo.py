@@ -33,12 +33,7 @@ class FitzhugNagumo(DataGen):
         match solver_name:
             case "thetamethod":
                 self.solver = ThetaMethod(
-                    final_time=params.final_time,
-                    time_step=params.time_step,
-                    u0=params.u0,
-                    f=f_temp,
-                    theta=params.theta,
-                    tol=params.tol,
+                    params
                 )
             case _:
                 pass
@@ -71,7 +66,7 @@ class FitzhugNagumo(DataGen):
                     ]
 
                 self.solver.set_f(f)
-                self.solver.reset()
+                # self.solver.reset()
                 self.solver.generateODE()
                 if plot:
                     self.solver.plot_solution()

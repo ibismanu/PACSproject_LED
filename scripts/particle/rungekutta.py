@@ -6,13 +6,13 @@ from scripts.utils.utils import check_butcher_sum, check_explicit_array
 
 
 class RungeKutta(GenerateParticle):
-    def __init__(self, params, f):
+    def __init__(self, params, f=None):
 
         super().__init__(params=params,f=f)
 
-        self.A = params.A
-        self.b = params.b
-        self.c = params.c
+        self.A = params.RK_A
+        self.b = params.RK_b
+        self.c = params.RK_c
         self.order = len(self.c)
 
         check_butcher_sum(A=self.A, b=self.b, c=self.c, s=self.order)
@@ -20,7 +20,7 @@ class RungeKutta(GenerateParticle):
     
 
 class RKExplicit(RungeKutta):
-    def __init__(self, params, f):
+    def __init__(self, params, f=None):
         super().__init__(params,f)
         is_explicit = check_explicit_array(self.A, semi=False)
         assert is_explicit, "explicit was called, but implicit Butcher array was given"
@@ -36,7 +36,7 @@ class RKExplicit(RungeKutta):
                 self.u[:, n + 1] = self.u[:, n] + self.dt * np.dot(self.b, k)
 
 class RKSemiImplicit(RungeKutta):
-    def __init__(self, params,f):
+    def __init__(self, params,f=None):
         super().__init__(params,f)
         check_explicit_array(self.A, semi=True)
 
@@ -89,7 +89,7 @@ class RKImplicit(RungeKutta):
             self.u[:, n + 1] = self.u[:, n] + self.dt * np.dot(self.b, k)
 
 class RKHeun(RKExplicit):
-    def __init__(self,params,f):
+    def __init__(self,params,f=None):
         self.A = np.array([[0, 0], [1, 0]], dtype=np.float32)
         self.b = np.array([0.5, 0.5], dtype=np.float32)
         self.c = np.array([0, 1], dtype=np.float32)
@@ -98,7 +98,7 @@ class RKHeun(RKExplicit):
 
 
 class RKRalston(RKExplicit):
-    def __init__(self, params,f):
+    def __init__(self, params,f=None):
         self.A = np.array([[0, 0], [2 / 3, 0]], dtype=np.float32)
         self.b = np.array([0.25, 0.75], dtype=np.float32)
         self.c = np.array([0, 2 / 3], dtype=np.float32)
@@ -107,7 +107,7 @@ class RKRalston(RKExplicit):
 
 
 class RK4(RKExplicit):
-    def __init__(self, params,f):
+    def __init__(self, params,f=None):
         self.A = np.array(
             [[0, 0, 0, 0], [1 / 3, 0, 0, 0], [-1 / 3, 1, 0, 0], [1, -1, 1, 0]],
             dtype=np.float32,

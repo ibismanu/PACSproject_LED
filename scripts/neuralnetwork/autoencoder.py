@@ -31,7 +31,7 @@ class Autoencoder:
                 monitor="val_loss", patience=5, factor=0.5, min_lr=1e-5
             ),
         ],
-        name=None,
+        ae_dir=None,
         seed=42,
     ):
         self.seed = seed
@@ -52,17 +52,16 @@ class Autoencoder:
         self.batch_size = batch_size
         self.callbacks = callbacks
 
-        if name is not None:
-            self.load_model(name)
+        if ae_dir is not None:
+            self.load_model(ae_dir)
 
-    def load_model(self, name):
-        path = "models/" + name + "/" + name
+    def load_model(self, ae_dir):
 
-        with open(path + ".json", "r") as json_file:
+        with open(ae_dir + ".json", "r") as json_file:
             auto_json = json_file.read()
 
         self.autoencoder = tfk.models.model_from_json(auto_json)
-        self.autoencoder.load_weights(path + ".h5")
+        self.autoencoder.load_weights(ae_dir + ".h5")
 
         self.encoder = self.autoencoder.get_layer("Encoder")
         self.decoder = self.autoencoder.get_layer("Decoder")
@@ -163,7 +162,7 @@ class Autoencoder:
             case ".npy":
                 X = np.load("dataset/" + name)
             case ".npz":
-                X = np.load("dataset/" + name)[compressed_name]
+                X = np.load(name)[compressed_name]
             case ".csv":
                 X = np.loadtxt("dataset/" + name, delimiter=",")
             case _:
@@ -185,15 +184,15 @@ class Autoencoder:
             callbacks=self.callbacks,
         ).history
 
-    def save_model(self, name):
-        file_path = "models/" + name + "/" + name
-        if not os.path.exists(file_path):
-            os.makedirs(file_path)
+    def save_model(self, ae_dir):
+
+        if not os.path.exists(ae_dir):
+            os.makedirs(ae_dir)
 
         auto_json = self.autoencoder.to_json()
-        with open(file_path + ".json", "w") as json_file:
+        with open(ae_dir + ".json", "w") as json_file:
             json_file.write(auto_json)
-        self.autoencoder.save_weights(file_path + ".h5")
+        self.autoencoder.save_weights(ae_dir + ".h5")
 
     def encode(self, raw_data, save=True):
         encoded_data = self.encoder.predict(raw_data, verbose=0)

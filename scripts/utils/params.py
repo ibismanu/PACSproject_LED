@@ -46,7 +46,7 @@ class SolverParams:
                 self.time_step = float(values[-1][1])
             if l[0:2]=='u0':
                 self.u0 = ast.literal_eval(values[-1][1])
-        
+
         if 'ThetaMethod' in lines[3]:
             valid =  (lines[4][:5] == 'theta')
             assert valid, "the value theta is missing, or the format is incorrect"

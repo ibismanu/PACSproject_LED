@@ -5,7 +5,7 @@ from scripts.particle.generate_particle import GenerateParticle
 
 
 class ThetaMethod(GenerateParticle):
-    def __init__(self, params,f):
+    def __init__(self, params,f=None):
         self.theta = params.theta
         self.tol = params.tol
         super().__init__(params,f)

@@ -32,7 +32,7 @@ def create_dataset(
         batch_size = num_samples
     num_batches = int(num_samples / batch_size) + 1
 
-    dir_name = "data/dataset/" + dataset_name
+    dir_name = "dataset/" + dataset_name
 
     if not os.path.exists(dir_name):
         os.mkdir(dir_name)
@@ -40,7 +40,7 @@ def create_dataset(
     for b in range(num_batches - 1):
         merged = []
         for i in range(batch_size):
-            filename = "data/samples/sample_" + str(b * batch_size + i) + ".npy"
+            filename = "dataset/samples/sample_" + str(b * batch_size + i) + ".npy"
             sample = np.load(filename)
             merged.append(sample)
         merged = np.array(merged)
@@ -53,7 +53,7 @@ def create_dataset(
     merged = []
     for i in range(num_samples % batch_size):
         filename = (
-            "data/samples/sample_" + str((num_batches - 1) * (batch_size-1) + i) + ".npy"
+            "dataset/samples/sample_" + str((num_batches - 1) * (batch_size-1) + i) + ".npy"
         )
         print(filename)
         sample = np.load(filename)
@@ -71,5 +71,5 @@ def create_dataset(
 
     if remove_samples:
         for i in range(num_samples):
-            filename = "data/samples/sample_" + str(i) + ".npy"
+            filename = "dataset/samples/sample_" + str(i) + ".npy"
             os.remove(filename)

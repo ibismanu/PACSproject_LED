@@ -6,13 +6,13 @@ from scripts.utils.utils import integral
 
 
 class Multistep(GenerateParticle):
-    def __init__(self, params,f):
+    def __init__(self, params,f=None):
         self.b = params.b
         super().__init__(params,f)
 
 
 class AdamsBashforth(GenerateParticle):
-    def __init__(self, params,f):
+    def __init__(self, params,f=None):
         self.order = params.multi_order
         super().__init__(params,f)
         self.b = np.zeros(self.order)
