@@ -27,6 +27,7 @@ class LED:
         self.load_data(data_path)
 
         self.autoencoder = Autoencoder(name=autoencoder_name)
+        self.decoder = self.autoencoder.get_layer('Decoder')
         self.latent_dim = self.autoencoder.encoder.output_shape[-1]
 
         self.rnn = RNN(model_name=rnn_name)
@@ -42,7 +43,8 @@ class LED:
         self.data = np.load(data_path)["test_data"][0]
 
     def run(self, compute_err=False):
-        self.encoded_data = self.autoencoder.encode(self.data, save=False)
+
+        self.encoded_data = self.autoencoder.encode(self.starting_data, save=False)
 
         self.encoded_smooth = np.zeros_like(self.encoded_data)
         for i in range(8):
@@ -54,25 +56,41 @@ class LED:
         self.decoded_future = self.autoencoder.decode(self.forecast)
 
     def compute_error(self):
-        pass
 
+        decoded_data = self.get_snapshot(times=np.arange(self.T_micro,self.T_macro))
+        diff_data = decoded_data - self.test_data
+        err = np.zeros(np.shape(decoded_data)[1:2])
 
-# class LED2:
-#     def __init__(self, data_dir, rnn_dir, ae_dir, T_micro, T_macro):
-#         self.data = np.load(data_dir)
-#         self.rnn = RNN(name=rnn_dir)
-#         self.autoencoder = Autoencoder(input_shape=np.shape(self.data))
-#         self.T_micro = T_micro
-#         self.T_macro = T_macro
+        for x in range(np.shape(decoded_data)[1]):
+            for y in range(np.shape(decoded_data)[2]):
+                err[x,y] = np.linalg.norm(diff_data,ord=np.inf)
 
-#     def predict(self, starting_sequence):
-#         encoded_dataset = self.autoencoder.encode(self.data[: self.T_micro])
+        return err
 
-#         future = self.rnn.predict_future(starting_sequence=encoded_dataset)
-#         self.timeline = np.concatenate((starting_sequence, future), axis=1)
+    def get_snapshot(self,times):
 
-#         output = self.autoencoder.decode(self.timeline[-1])
+        #TODO: fare un check cosa succede in base a che oggetto è times (array vs intero)
 
-#     def compute_error(self):
-#         # err = ||data-timeline||
-#         pass
+        snapshots = []
+
+        for time in times:
+            encoded_snapshot = self.future[time-self.T_micro]
+            snapshots.append(self.decoder.predict(encoded_snapshot))
+
+        return snapshots
+    
+    def get_particle(self,x,y,plot=False):
+        
+        particle = self.get_snapshot(times=np.arange(self.T_micro,self.T_macro))[:,x,y,:]
+
+        if plot:
+            num_variables = np.shape(particle)[-1]
+
+            fig,axs = plt.subplots(num_variables,1,figsize=(8, 6))
+
+            for i in range(num_variables):
+                axs[i].plot(np.arange(self.T_micro,self.T_macro), particle[:,i])
+                axs[i].set_title('Component ',i)
+
+            plt.tight_layout()
+            plt.show()

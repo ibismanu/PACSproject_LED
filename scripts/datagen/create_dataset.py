@@ -9,22 +9,21 @@ def create_dataset(
     dataset_name,
     num_samples,
     num_processes,
-    ms_params,
+    fn_params,
     batch_size=None,
     generate=True,
     remove_samples=True,
 ):
     if generate:
         FN = FitzhugNagumo(
-            eqtype=ms_params.eqtype,
-            params=ms_params.solver_params,
-            k=ms_params.k,
-            alpha=ms_params.alpha,
-            epsilon=ms_params.epsilon,
-            I=ms_params.I,
-            gamma=ms_params.gamma,
-            grid_size=ms_params.grid_size,
-            solver_name=ms_params.solver_name,
+            params=fn_params.solver_params,
+            k=fn_params.k,
+            alpha=fn_params.alpha,
+            epsilon=fn_params.epsilon,
+            I=fn_params.I,
+            gamma=fn_params.gamma,
+            grid_size=fn_params.grid_size,
+            solver_name=fn_params.solver_name,
         )
 
         FN.generate_dataset(num_samples=num_samples, num_processes=num_processes)
@@ -33,7 +32,7 @@ def create_dataset(
         batch_size = num_samples
     num_batches = int(num_samples / batch_size) + 1
 
-    dir_name = "data/dataset/" + dataset_name
+    dir_name = "dataset/" + dataset_name
 
     if not os.path.exists(dir_name):
         os.mkdir(dir_name)
@@ -41,7 +40,7 @@ def create_dataset(
     for b in range(num_batches - 1):
         merged = []
         for i in range(batch_size):
-            filename = "data/samples/sample_" + str(b * batch_size + i) + ".npy"
+            filename = "dataset/samples/sample_" + str(b * batch_size + i) + ".npy"
             sample = np.load(filename)
             merged.append(sample)
         merged = np.array(merged)
@@ -54,7 +53,7 @@ def create_dataset(
     merged = []
     for i in range(num_samples % batch_size):
         filename = (
-            "data/samples/sample_" + str((num_batches - 1) * (batch_size-1) + i) + ".npy"
+            "dataset/samples/sample_" + str((num_batches - 1) * (batch_size-1) + i) + ".npy"
         )
         print(filename)
         sample = np.load(filename)
@@ -72,5 +71,5 @@ def create_dataset(
 
     if remove_samples:
         for i in range(num_samples):
-            filename = "data/samples/sample_" + str(i) + ".npy"
+            filename = "dataset/samples/sample_" + str(i) + ".npy"
             os.remove(filename)

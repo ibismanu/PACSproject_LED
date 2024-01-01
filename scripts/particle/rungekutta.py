@@ -1,26 +1,29 @@
 import numpy as np
 from scipy.optimize import newton, anderson
 
-from particle.generate_particle import GenerateParticle
-from utils.utils import check_butcher_sum, check_explicit_array
+from scripts.particle.generate_particle import GenerateParticle
+from scripts.utils.utils import check_butcher_sum, check_explicit_array
 
 
 class RungeKutta(GenerateParticle):
-    def __init__(self, A, b, c, *args, **kwargs):
-        self.A = A
-        self.b = b
-        self.c = c
-        self.order = len(c)
+    def __init__(self, params, f=None):
+
+        super().__init__(params=params,f=f)
+
+        self.A = params.RK_A
+        self.b = params.RK_b
+        self.c = params.RK_c
+        self.order = len(self.c)
 
         check_butcher_sum(A=self.A, b=self.b, c=self.c, s=self.order)
 
-        super().__init__(*args, **kwargs)
-
+    
 
 class RKExplicit(RungeKutta):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        check_explicit_array(self.A, semi=False)
+    def __init__(self, params, f=None):
+        super().__init__(params,f)
+        is_explicit = check_explicit_array(self.A, semi=False)
+        assert is_explicit, "explicit was called, but implicit Butcher array was given"
 
     def generateODE(self):
         for n in range(self.num_it):
@@ -32,14 +35,9 @@ class RKExplicit(RungeKutta):
                 )
                 self.u[:, n + 1] = self.u[:, n] + self.dt * np.dot(self.b, k)
 
-    def generatePDE(self):
-        # TODO
-        pass
-
-
 class RKSemiImplicit(RungeKutta):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, params,f=None):
+        super().__init__(params,f)
         check_explicit_array(self.A, semi=True)
 
     def generateODE(self):
@@ -68,12 +66,8 @@ class RKSemiImplicit(RungeKutta):
 
             self.u[:, n + 1] = self.u[:, n] + self.dt * np.dot(self.b, k)
 
-    def generatePDE(self):
-        # TODO
-        pass
-
-
 class RKImplicit(RungeKutta):
+
     def generateODE(self):
         tol = 1e-2
         for n in range(self.num_it):
@@ -94,36 +88,31 @@ class RKImplicit(RungeKutta):
 
             self.u[:, n + 1] = self.u[:, n] + self.dt * np.dot(self.b, k)
 
-    def generatePDE(self):
-        # TODO
-        pass
-
-
 class RKHeun(RKExplicit):
-    def __init__(self, *args, **kwargs):
-        A = np.array([[0, 0], [1, 0]], dtype=np.float32)
-        b = np.array([0.5, 0.5], dtype=np.float32)
-        c = np.array([0, 1], dtype=np.float32)
+    def __init__(self,params,f=None):
+        self.A = np.array([[0, 0], [1, 0]], dtype=np.float32)
+        self.b = np.array([0.5, 0.5], dtype=np.float32)
+        self.c = np.array([0, 1], dtype=np.float32)
 
-        super().__init__(A=A, b=b, c=c, *args, **kwargs)
+        super().__init__(params,f)
 
 
 class RKRalston(RKExplicit):
-    def __init__(self, *args, **kwargs):
-        A = np.array([[0, 0], [2 / 3, 0]], dtype=np.float32)
-        b = np.array([0.25, 0.75], dtype=np.float32)
-        c = np.array([0, 2 / 3], dtype=np.float32)
+    def __init__(self, params,f=None):
+        self.A = np.array([[0, 0], [2 / 3, 0]], dtype=np.float32)
+        self.b = np.array([0.25, 0.75], dtype=np.float32)
+        self.c = np.array([0, 2 / 3], dtype=np.float32)
 
-        super().__init__(A=A, b=b, c=c, *args, **kwargs)
+        super().__init__(params,f)
 
 
 class RK4(RKExplicit):
-    def __init__(self, *args, **kwargs):
-        A = np.array(
+    def __init__(self, params,f=None):
+        self.A = np.array(
             [[0, 0, 0, 0], [1 / 3, 0, 0, 0], [-1 / 3, 1, 0, 0], [1, -1, 1, 0]],
             dtype=np.float32,
         )
-        b = np.array([1 / 8, 3 / 8, 3 / 8, 1 / 8], dtype=np.float32)
-        c = np.array([0, 1 / 3, 2 / 3, 1], dtype=np.float32)
+        self.b = np.array([1 / 8, 3 / 8, 3 / 8, 1 / 8], dtype=np.float32)
+        self.c = np.array([0, 1 / 3, 2 / 3, 1], dtype=np.float32)
 
-        super().__init__(A=A, b=b, c=c, *args, **kwargs)
+        super().__init__(params,f)

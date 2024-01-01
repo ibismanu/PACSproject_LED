@@ -1,27 +1,26 @@
 import numpy as np
 from math import factorial
 
-from particle.generate_particle import GenerateParticle
-from utils.utils import integral
+from scripts.particle.generate_particle import GenerateParticle
+from scripts.utils.utils import integral
 
 
 class Multistep(GenerateParticle):
-    def __init__(self, A, b, *args, **kwargs):
-        self.A = A
-        self.b = b
-        super().__init__(*args, **kwargs)
+    def __init__(self, params,f=None):
+        self.b = params.b
+        super().__init__(params,f)
 
 
 class AdamsBashforth(GenerateParticle):
-    def __init__(self, order, *args, **kwargs):
-        self.order = order
-        super().__init__(*args, **kwargs)
-        self.b = np.zeros(order)
+    def __init__(self, params,f=None):
+        self.order = params.multi_order
+        super().__init__(params,f)
+        self.b = np.zeros(self.order)
 
         def g(v, j):
             return np.prod(np.array([v + i for i in range(self.order)])) / (v + j)
 
-        for j in range(order):
+        for j in range(self.order):
             self.b[self.order - j - 1] = (
                 (1 - 2 * (j % 2))
                 / (factorial(j) * factorial(self.order - j - 1))
@@ -41,11 +40,6 @@ class AdamsBashforth(GenerateParticle):
                     * self.b[i]
                     * self.f(self.u[:, k + 1 + i], self.t[k + 1 + i])
                 )
-
-    def generatePDE(self):
-        # TODO
-        pass
-
 
 class AdamsMoulton(GenerateParticle):
     # TODO

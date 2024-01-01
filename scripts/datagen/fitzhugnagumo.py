@@ -2,10 +2,9 @@ import numpy as np
 import time
 from multiprocessing import Pool
 
-from datagen.datagen import DataGen
-from utils.utils import  to_numpy
-from utils.params import SolverParams
-from particle.thetamethod import ThetaMethod
+from scripts.datagen.datagen import DataGen
+from scripts.utils.params import SolverParams
+from scripts.particle.thetamethod import ThetaMethod
 
 
 def f_temp(x):
@@ -16,9 +15,8 @@ class FitzhugNagumo(DataGen):
     params: SolverParams
 
     def __init__(
-        self, eqtype, params, k, alpha, epsilon, I, gamma, grid_size, solver_name
+        self, params, k, alpha, epsilon, I, gamma, grid_size, solver_name
     ):
-        self.eqtype = eqtype
         self.params = params
         self.k = k
         self.alpha = alpha
@@ -35,13 +33,7 @@ class FitzhugNagumo(DataGen):
         match solver_name:
             case "thetamethod":
                 self.solver = ThetaMethod(
-                    eqtype=eqtype,
-                    final_time=params.final_time,
-                    time_step=params.time_step,
-                    u0=params.u0,
-                    f=f_temp,
-                    theta=params.theta,
-                    tol=params.tol,
+                    params
                 )
             case _:
                 pass
@@ -74,8 +66,8 @@ class FitzhugNagumo(DataGen):
                     ]
 
                 self.solver.set_f(f)
-                self.solver.reset()
-                self.solver.generate()
+                # self.solver.reset()
+                self.solver.generateODE()
                 if plot:
                     self.solver.plot_solution()
 
