@@ -30,9 +30,10 @@ class SolverParams:
         self.multi_A = multi_A
         self.multi_b = multi_b
         self.multi_order = multi_order
+        self.solver_name = None
 
     def get_from_file(self,filedir):
-        
+
         with open(filedir, 'r') as file:
             lines = file.readlines()
         values = []
@@ -47,7 +48,11 @@ class SolverParams:
             if l[0:2]=='u0':
                 self.u0 = ast.literal_eval(values[-1][1])
 
+        if 'RK' in lines[3]:
+            self.solver_name = 'rungekutta'
+
         if 'ThetaMethod' in lines[3]:
+            self.solver_name='thetamethod'
             valid =  (lines[4][:5] == 'theta')
             assert valid, "the value theta is missing, or the format is incorrect"
             valid =  (lines[5][:3] == 'tol')
@@ -56,6 +61,7 @@ class SolverParams:
             self.tol = float(values[5][1])
 
         if 'RungeKutta' in lines[3]:
+            self.solver_name='rungekutta'
             valid = (lines[4][0] == 'A')
             assert valid, "the matrix A is missing, or the format is incorrect"
             valid = (lines[5][0] == 'b')
@@ -78,10 +84,29 @@ class SolverParams:
             self.RK_c = arr
 
         if 'AdamsBashforth' in lines[3]:
+            self.solver_name='multistep'
             valid = (lines[4][:5] == 'order')
             assert valid, "the order is missing, or the format is incorrect"
-
             self.multi_order = int(lines[4][6:])
+
+    def print_params(self):
+
+        print("Solver = ", self.solver_name)
+        print("T = ",self.final_time)
+        print("dt = ", self.time_step)
+
+        if self.theta is not None:
+            print("Theta: ", self.theta)
+            print("Tolerance: ", self.tol)
+        if self.multi_A is not None:
+            print("A = ", self.RK_A)
+            print("b = ", self.RK_b)
+            print("c = ", self.RK_c)
+        if self.multi_order is not None:
+            print("A = ", self.multi_A)
+            print("b = ", self.multi_b)
+            print("Order = ", self.multi_order)
+        
 
         
 

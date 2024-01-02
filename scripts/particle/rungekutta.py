@@ -90,29 +90,29 @@ class RKImplicit(RungeKutta):
 
 class RKHeun(RKExplicit):
     def __init__(self,params,f=None):
-        self.A = np.array([[0, 0], [1, 0]], dtype=np.float32)
-        self.b = np.array([0.5, 0.5], dtype=np.float32)
-        self.c = np.array([0, 1], dtype=np.float32)
+        params.RK_A = np.array([[0, 0], [1, 0]], dtype=np.float32)
+        params.RK_b = np.array([0.5, 0.5], dtype=np.float32)
+        params.RK_c = np.array([0, 1], dtype=np.float32)
 
         super().__init__(params,f)
 
 
 class RKRalston(RKExplicit):
     def __init__(self, params,f=None):
-        self.A = np.array([[0, 0], [2 / 3, 0]], dtype=np.float32)
-        self.b = np.array([0.25, 0.75], dtype=np.float32)
-        self.c = np.array([0, 2 / 3], dtype=np.float32)
+        params.RK_A = np.array([[0, 0], [2 / 3, 0]], dtype=np.float32)
+        params.RK_b = np.array([0.25, 0.75], dtype=np.float32)
+        params.RK_c = np.array([0, 2 / 3], dtype=np.float32)
 
         super().__init__(params,f)
 
 
 class RK4(RKExplicit):
     def __init__(self, params,f=None):
-        self.A = np.array(
+        params.RK_A = np.array(
             [[0, 0, 0, 0], [1 / 3, 0, 0, 0], [-1 / 3, 1, 0, 0], [1, -1, 1, 0]],
             dtype=np.float32,
         )
-        self.b = np.array([1 / 8, 3 / 8, 3 / 8, 1 / 8], dtype=np.float32)
-        self.c = np.array([0, 1 / 3, 2 / 3, 1], dtype=np.float32)
+        params.RK_b = np.array([1 / 8, 3 / 8, 3 / 8, 1 / 8], dtype=np.float32)
+        params.RK_c = np.array([0, 1 / 3, 2 / 3, 1], dtype=np.float32)
 
         super().__init__(params,f)

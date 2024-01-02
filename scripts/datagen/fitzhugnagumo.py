@@ -5,7 +5,8 @@ from multiprocessing import Pool
 from scripts.datagen.datagen import DataGen
 from scripts.utils.params import SolverParams
 from scripts.particle.thetamethod import ThetaMethod
-
+from scripts.particle.rungekutta import RKHeun
+from scripts.particle.multistep import AdamsBashforth
 
 def f_temp(x):
     return np.array([0])
@@ -35,8 +36,10 @@ class FitzhugNagumo(DataGen):
                 self.solver = ThetaMethod(
                     params
                 )
-            case _:
-                pass
+            case "rungekutta":
+                self.solver = RKHeun(params)
+            case "multistep":
+                self.solver = AdamsBashforth(params)
 
     def generate_sample(self, name, x0=None, plot=False):
         if x0 is None:
