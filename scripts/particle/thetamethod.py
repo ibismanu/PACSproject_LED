@@ -2,14 +2,21 @@ import numpy as np
 from scipy.optimize import newton
 
 from scripts.particle.generate_particle import GenerateParticle
-
+from functools import singledispatchmethod
+from scripts.utils.params import SolverParams
 
 class ThetaMethod(GenerateParticle):
+    @singledispatchmethod
     def __init__(self, params,f=None):
         self.theta = params.theta
         self.tol = params.tol
         super().__init__(params,f)
 
+    @__init__.register(str)
+    def _from_file(self, params, f=None):
+        P = SolverParams.get_from_file(filedir=params)
+        self. __init__(P, f)
+        
     def generateODE(self):
 
         self.u[:, 0] = self.u0

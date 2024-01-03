@@ -3,9 +3,11 @@ from scipy.optimize import newton, anderson
 
 from scripts.particle.generate_particle import GenerateParticle
 from scripts.utils.utils import check_butcher_sum, check_explicit_array
-
+from functools import singledispatchmethod
+from scripts.utils.params import SolverParams
 
 class RungeKutta(GenerateParticle):
+    @singledispatchmethod
     def __init__(self, params, f=None):
 
         super().__init__(params=params,f=f)
@@ -17,14 +19,23 @@ class RungeKutta(GenerateParticle):
 
         check_butcher_sum(A=self.A, b=self.b, c=self.c, s=self.order)
 
-    
+    @__init__.register(str)
+    def _from_file(self, params, f=None):
+        P = SolverParams.get_from_file(filedir=params)
+        self. __init__(P, f)
 
 class RKExplicit(RungeKutta):
+    @singledispatchmethod
     def __init__(self, params, f=None):
         super().__init__(params,f)
         is_explicit = check_explicit_array(self.A, semi=False)
         assert is_explicit, "explicit was called, but implicit Butcher array was given"
-
+        
+    @__init__.register(str)
+    def _from_file(self, params, f=None):
+        P = SolverParams.get_from_file(filedir=params)
+        self. __init__(P, f)
+        
     def generateODE(self):
         for n in range(self.num_it):
             k = np.zeros((self.order, len(self.u)))
@@ -36,10 +47,16 @@ class RKExplicit(RungeKutta):
                 self.u[:, n + 1] = self.u[:, n] + self.dt * np.dot(self.b, k)
 
 class RKSemiImplicit(RungeKutta):
+    @singledispatchmethod
     def __init__(self, params,f=None):
         super().__init__(params,f)
         check_explicit_array(self.A, semi=True)
 
+    @__init__.register(str)
+    def _from_file(self, params, f=None):
+        P = SolverParams.get_from_file(filedir=params)
+        self. __init__(P, f)
+        
     def generateODE(self):
         for n in range(self.num_it):
             k = np.zeros((self.order, len(self.u[:, 0])))
@@ -67,7 +84,10 @@ class RKSemiImplicit(RungeKutta):
             self.u[:, n + 1] = self.u[:, n] + self.dt * np.dot(self.b, k)
 
 class RKImplicit(RungeKutta):
-
+    
+    def __init__(self, params, f=None):
+        super.__init__(params,f)
+        
     def generateODE(self):
         tol = 1e-2
         for n in range(self.num_it):
@@ -89,6 +109,7 @@ class RKImplicit(RungeKutta):
             self.u[:, n + 1] = self.u[:, n] + self.dt * np.dot(self.b, k)
 
 class RKHeun(RKExplicit):
+    @singledispatchmethod
     def __init__(self,params,f=None):
         params.RK_A = np.array([[0, 0], [1, 0]], dtype=np.float32)
         params.RK_b = np.array([0.5, 0.5], dtype=np.float32)
@@ -96,17 +117,27 @@ class RKHeun(RKExplicit):
 
         super().__init__(params,f)
 
+    @__init__.register(str)
+    def _from_file(self, params, f=None):
+        P = SolverParams.get_from_file(filedir=params)
+        self. __init__(P, f)
 
 class RKRalston(RKExplicit):
+    @singledispatchmethod
     def __init__(self, params,f=None):
         params.RK_A = np.array([[0, 0], [2 / 3, 0]], dtype=np.float32)
         params.RK_b = np.array([0.25, 0.75], dtype=np.float32)
         params.RK_c = np.array([0, 2 / 3], dtype=np.float32)
 
         super().__init__(params,f)
-
+    
+    @__init__.register(str)
+    def _from_file(self, params, f=None):
+        P = SolverParams.get_from_file(filedir=params)
+        self. __init__(P, f)
 
 class RK4(RKExplicit):
+    @singledispatchmethod
     def __init__(self, params,f=None):
         params.RK_A = np.array(
             [[0, 0, 0, 0], [1 / 3, 0, 0, 0], [-1 / 3, 1, 0, 0], [1, -1, 1, 0]],
@@ -116,3 +147,8 @@ class RK4(RKExplicit):
         params.RK_c = np.array([0, 1 / 3, 2 / 3, 1], dtype=np.float32)
 
         super().__init__(params,f)
+    
+    @__init__.register(str)
+    def _from_file(self, params, f=None):
+        P = SolverParams.get_from_file(filedir=params)
+        self. __init__(P, f)

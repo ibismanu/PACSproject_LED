@@ -18,6 +18,7 @@ class SolverParams:
         multi_A=None,
         multi_b=None,
         multi_order=None,
+        solver_name=None
     ):
         self.final_time = final_time
         self.time_step = time_step
@@ -30,9 +31,10 @@ class SolverParams:
         self.multi_A = multi_A
         self.multi_b = multi_b
         self.multi_order = multi_order
-        self.solver_name = None
+        self.solver_name = solver_name
 
-    def get_from_file(self,filedir):
+    @classmethod
+    def get_from_file(cls,filedir):
 
         with open(filedir, 'r') as file:
             lines = file.readlines()
@@ -42,26 +44,30 @@ class SolverParams:
             values.append(l.strip().split(sep='='))
 
             if l[0]=='T':
-                self.final_time = float(values[-1][1])
+                final_time = float(values[-1][1])
             if l[0:2]=='dt':
-                self.time_step = float(values[-1][1])
+                time_step = float(values[-1][1])
             if l[0:2]=='u0':
-                self.u0 = ast.literal_eval(values[-1][1])
+                u0 = ast.literal_eval(values[-1][1])
 
         if 'RK' in lines[3]:
-            self.solver_name = 'rungekutta'
+            solver_name = 'rungekutta'
+            
+            return cls(final_time, time_step, u0, solver_name=solver_name)
 
         if 'ThetaMethod' in lines[3]:
-            self.solver_name='thetamethod'
+            solver_name='thetamethod'
             valid =  (lines[4][:5] == 'theta')
             assert valid, "the value theta is missing, or the format is incorrect"
             valid =  (lines[5][:3] == 'tol')
             assert valid, "the tolerance is missing, or the format is incorrect"
-            self.theta = float(values[4][1])
-            self.tol = float(values[5][1])
+            theta = float(values[4][1])
+            tol = float(values[5][1])
+            
+            return cls(final_time, time_step, u0, theta=theta, tol=tol, solver_name=solver_name)
 
         if 'RungeKutta' in lines[3]:
-            self.solver_name='rungekutta'
+            solver_name='rungekutta'
             valid = (lines[4][0] == 'A')
             assert valid, "the matrix A is missing, or the format is incorrect"
             valid = (lines[5][0] == 'b')
@@ -73,21 +79,25 @@ class SolverParams:
             components = str_numbers.rstrip('\n').split(' ')
             components_ = [ast.literal_eval(num) for num in components]
             arr = np.array(components_, dtype=np.float32)
-            self.RK_A = arr
+            RK_A = arr
 
             str_numbers = ast.literal_eval(lines[5][2:])
             arr = np.array(str_numbers, dtype=np.float32)
-            self.RK_b = arr
+            RK_b = arr
 
             str_numbers = ast.literal_eval(lines[6][2:]) 
             arr = np.array(str_numbers, dtype=np.float32)
-            self.RK_c = arr
-
+            RK_c = arr
+            
+            return cls(final_time, time_step, u0, RK_A=RK_A, RK_b=RK_b, RK_c=RK_c, solver_name=solver_name)
+        
         if 'AdamsBashforth' in lines[3]:
-            self.solver_name='multistep'
+            solver_name='multistep'
             valid = (lines[4][:5] == 'order')
             assert valid, "the order is missing, or the format is incorrect"
-            self.multi_order = int(lines[4][6:])
+            multi_order = int(lines[4][6:])
+            
+            return cls(final_time, time_step, u0, multi_order=multi_order, solver_name=solver_name)
 
     def print_params(self):
 

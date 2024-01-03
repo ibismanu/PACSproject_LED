@@ -3,7 +3,8 @@ from math import factorial
 
 from scripts.particle.generate_particle import GenerateParticle
 from scripts.utils.utils import integral
-
+from functools import singledispatchmethod
+from scripts.utils.params import SolverParams
 
 class Multistep(GenerateParticle):
     def __init__(self, params,f=None):
@@ -12,6 +13,7 @@ class Multistep(GenerateParticle):
 
 
 class AdamsBashforth(GenerateParticle):
+    @singledispatchmethod
     def __init__(self, params,f=None):
         self.order = params.multi_order
         super().__init__(params,f)
@@ -26,7 +28,12 @@ class AdamsBashforth(GenerateParticle):
                 / (factorial(j) * factorial(self.order - j - 1))
                 * integral(g, j, self.order)
             )
-
+            
+    @__init__.register(str)
+    def _from_file(self, params, f=None):
+        P = SolverParams.get_from_file(filedir=params)
+        self. __init__(P, f)
+        
     def generateODE(self):
         for n in range(self.order):
             self.u[:, n + 1] = self.u[:, n] + self.dt * self.f(self.u[:, n], self.t[n])

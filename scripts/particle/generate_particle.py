@@ -3,9 +3,12 @@ import matplotlib.pyplot as plt
 from abc import ABC, abstractmethod
 
 from scripts.utils.utils import to_numpy
-
+from functools import singledispatchmethod
+from scripts.utils.params import SolverParams
 
 class GenerateParticle(ABC):
+    
+    @singledispatchmethod
     def __init__(
         self,
         params,
@@ -30,7 +33,16 @@ class GenerateParticle(ABC):
             self.u0 = np.array([self.u0])
 
         self.u[:, 0] = self.u0
-
+        
+    @__init__.register(str)
+    def _from_file(
+        self,
+        params,
+        f=None
+    ):
+        P = SolverParams.get_from_file(params)
+        self. __init__(P, f)
+        
     @abstractmethod
     def generateODE(self):
         pass
