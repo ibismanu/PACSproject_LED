@@ -94,6 +94,7 @@ class SolverParams:
         print("Solver = ", self.solver_name)
         print("T = ",self.final_time)
         print("dt = ", self.time_step)
+        print('u0 = ', self.u0)
 
         if self.theta is not None:
             print("Theta: ", self.theta)
@@ -112,7 +113,7 @@ class SolverParams:
 
 class FNParams:
     def __init__(
-        self, solver_params, k, alpha, epsilon, I, gamma, grid_size, solver_name
+        self, solver_params, k, alpha, epsilon, I, gamma, grid_size
     ):
         self.solver_params = solver_params
         self.k = k
@@ -121,4 +122,3 @@ class FNParams:
         self.I = I
         self.gamma = gamma
         self.grid_size = grid_size
-        self.solver_name = solver_name

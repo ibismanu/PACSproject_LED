@@ -11,6 +11,9 @@ class ThetaMethod(GenerateParticle):
         super().__init__(params,f)
 
     def generateODE(self):
+
+        self.u[:, 0] = self.u0
+
         for n in range(self.num_it):
             rhs = self.u[:, n] + self.dt * (1 - self.theta) * self.f(
                 self.u[:, n], self.t[n]

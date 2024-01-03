@@ -53,7 +53,7 @@ class GenerateParticle(ABC):
             if exact_sol is not None:
                 u_ex = exact_sol(self.t)
                 axs[i].plot(self.t, u_ex[i], linestyle="dashed", label="exact solution")
-            axs[i].set_title("component %f of the solution" % i)
+            axs[i].set_title("component %i of the solution" % i)
             axs[i].legend()
 
         fig.tight_layout()

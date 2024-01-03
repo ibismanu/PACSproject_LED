@@ -16,7 +16,7 @@ class FitzhugNagumo(DataGen):
     params: SolverParams
 
     def __init__(
-        self, params, k, alpha, epsilon, I, gamma, grid_size, solver_name
+        self, params, k, alpha, epsilon, I, gamma, grid_size
     ):
         self.params = params
         self.k = k
@@ -31,7 +31,7 @@ class FitzhugNagumo(DataGen):
             (self.num_it + 1, grid_size[0], grid_size[1], len(params.u0))
         )
 
-        match solver_name:
+        match self.params.solver_name:
             case "thetamethod":
                 self.solver = ThetaMethod(
                     params
@@ -69,7 +69,7 @@ class FitzhugNagumo(DataGen):
                     ]
 
                 self.solver.set_f(f)
-                # self.solver.reset()
+                self.solver.reset()
                 self.solver.generateODE()
                 if plot:
                     self.solver.plot_solution()

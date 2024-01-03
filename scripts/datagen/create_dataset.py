@@ -9,12 +9,13 @@ def create_dataset(
     dataset_name,
     num_samples,
     num_processes,
-    fn_params,
+    fn_params=None,
     batch_size=None,
     generate=True,
     remove_samples=True,
 ):
     if generate:
+
         FN = FitzhugNagumo(
             params=fn_params.solver_params,
             k=fn_params.k,
@@ -23,7 +24,6 @@ def create_dataset(
             I=fn_params.I,
             gamma=fn_params.gamma,
             grid_size=fn_params.grid_size,
-            solver_name=fn_params.solver_name,
         )
 
         FN.generate_dataset(num_samples=num_samples, num_processes=num_processes)
