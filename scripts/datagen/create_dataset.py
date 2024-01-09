@@ -2,31 +2,41 @@ import numpy as np
 import os
 
 from scripts.datagen.fitzhugnagumo import FitzhugNagumo
-from scripts.utils.params import SolverParams, FNParams
+from scripts.datagen.vanderpol import VanDerPol
 
 
 def create_dataset(
     dataset_name,
     num_samples,
     num_processes,
-    fn_params=None,
+    model_name=None,
+    params=None,
+    mu=None,
     batch_size=None,
     generate=True,
     remove_samples=True,
 ):
     if generate:
 
-        FN = FitzhugNagumo(
-            params=fn_params.solver_params,
-            k=fn_params.k,
-            alpha=fn_params.alpha,
-            epsilon=fn_params.epsilon,
-            I=fn_params.I,
-            gamma=fn_params.gamma,
-            grid_size=fn_params.grid_size,
-        )
+        if model_name=='Fitzhug Nagumo':
+            fn_params = params
 
-        FN.generate_dataset(num_samples=num_samples, num_processes=num_processes)
+            FN = FitzhugNagumo(
+                params=fn_params.solver_params,
+                k=fn_params.k,
+                alpha=fn_params.alpha,
+                epsilon=fn_params.epsilon,
+                I=fn_params.I,
+                gamma=fn_params.gamma,
+                grid_size=fn_params.grid_size,
+            )
+
+            FN.generate_dataset(num_samples=num_samples, num_processes=num_processes)
+
+        if model_name == 'Van Der Pol':
+            VDP = VanDerPol(params,mu)
+
+            VDP.generate_dataset(num_samples=num_samples,num_processes=num_processes)
 
     if batch_size is None:
         batch_size = num_samples

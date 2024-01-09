@@ -59,8 +59,8 @@ class LED:
         snapshots = []
 
         for time in times:
-            encoded_snapshot = self.future[time-self.T_micro]
-            snapshots.append(self.decoder.predict(encoded_snapshot))
+            encoded_snapshot = self.forecast[time]
+            snapshots.append(self.autoencoder.decoder.predict(encoded_snapshot))
 
         return snapshots
     
