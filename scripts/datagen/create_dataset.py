@@ -60,24 +60,22 @@ def create_dataset(
             data=merged,
         )
 
-    merged = []
-    for i in range(num_samples % batch_size):
-        filename = (
-            "dataset/samples/sample_" + str((num_batches - 1) * (batch_size-1) + i) + ".npy"
-        )
-        print(filename)
-        sample = np.load(filename)
-        merged.append(sample)
-    merged = np.array(merged)
+    # merged = []
+    # for i in range(num_samples % batch_size):
+    #     filename = (
+    #         "dataset/samples/sample_" + str((num_batches - 1) * (batch_size-1) + i) + ".npy"
+    #     )
+    #     print(filename)
+    #     sample = np.load(filename)
+    #     merged.append(sample)
+    # merged = np.array(merged)
 
-    np.savez_compressed(
-        dir_name
-        + "/"
-        + dataset_name
-        + "_"
-        + str(num_batches - 1),
-        data=merged,
-    )
+    # file_dir = dir_name + "/" + dataset_name + "_" + str(num_batches - 1) + ".npz"
+
+    # np.savez_compressed(
+    #     file=file_dir,
+    #     data=merged,
+    # )
 
     if remove_samples:
         for i in range(num_samples):
