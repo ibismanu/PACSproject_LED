@@ -10,8 +10,8 @@ def create_dataset(
     num_samples,
     num_processes,
     model_name=None,
-    params=None,
-    mu=None,
+    solver_params=None,
+    model_params=None,
     batch_size=None,
     generate=True,
     remove_samples=True,
@@ -19,22 +19,21 @@ def create_dataset(
     if generate:
 
         if model_name=='Fitzhug Nagumo':
-            fn_params = params
 
             FN = FitzhugNagumo(
-                params=fn_params.solver_params,
-                k=fn_params.k,
-                alpha=fn_params.alpha,
-                epsilon=fn_params.epsilon,
-                I=fn_params.I,
-                gamma=fn_params.gamma,
-                grid_size=fn_params.grid_size,
+                params=solver_params,
+                k=model_params.k,
+                alpha=model_params.alpha,
+                epsilon=model_params.epsilon,
+                I=model_params.I,
+                gamma=model_params.gamma,
+                grid_size=model_params.grid_size,
             )
 
             FN.generate_dataset(num_samples=num_samples, num_processes=num_processes)
 
         if model_name == 'Van Der Pol':
-            VDP = VanDerPol(params,mu)
+            VDP = VanDerPol(solver_params,model_params)
 
             VDP.generate_dataset(num_samples=num_samples,num_processes=num_processes)
 
@@ -60,24 +59,22 @@ def create_dataset(
             data=merged,
         )
 
-    merged = []
-    for i in range(num_samples % batch_size):
-        filename = (
-            "dataset/samples/sample_" + str((num_batches - 1) * (batch_size-1) + i) + ".npy"
-        )
-        print(filename)
-        sample = np.load(filename)
-        merged.append(sample)
-    merged = np.array(merged)
+    # merged = []
+    # for i in range(num_samples % batch_size):
+    #     filename = (
+    #         "dataset/samples/sample_" + str((num_batches - 1) * (batch_size-1) + i) + ".npy"
+    #     )
+    #     print(filename)
+    #     sample = np.load(filename)
+    #     merged.append(sample)
+    # merged = np.array(merged)
 
-    np.savez_compressed(
-        dir_name
-        + "/"
-        + dataset_name
-        + "_"
-        + str(num_batches - 1),
-        data=merged,
-    )
+    # file_dir = dir_name + "/" + dataset_name + "_" + str(num_batches - 1) + ".npz"
+
+    # np.savez_compressed(
+    #     file=file_dir,
+    #     data=merged,
+    # )
 
     if remove_samples:
         for i in range(num_samples):

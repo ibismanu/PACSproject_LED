@@ -70,14 +70,14 @@ class RNN:
         self.rnn = tfk.models.model_from_json(model_json)
         self.rnn.load_weights(path + ".h5")
 
-    def get_data(self, file_name, compressed_name="arr_0"):
-        match file_name[-4:]:
+    def get_data(self, file_path, compressed_name="arr_0"):
+        match file_path[-4:]:
             case ".npy":
-                data = np.load("dataset/" + file_name)
+                data = np.load(file_path)
             case ".npz":
-                data = np.load("dataset/" + file_name)[compressed_name]
+                data = np.load(file_path)[compressed_name]
             case ".csv":
-                data = np.loadtxt("dataset/" + file_name, delimiter=",")
+                data = np.loadtxt(file_path, delimiter=",")
             case _:
                 raise ValueError("File type not supported")
 

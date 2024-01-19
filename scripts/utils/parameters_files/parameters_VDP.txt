@@ -1,4 +1,4 @@
-T=50
+T=25
 dt=0.1
 u0=[1.0,1.0]
 solver=ThetaMethod
