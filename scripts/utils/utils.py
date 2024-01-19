@@ -1,5 +1,6 @@
 import numpy as np
 import functools
+from scipy import ndimage
 
 
 def to_numpy(fun):
@@ -75,3 +76,10 @@ def import_tensorflow():
 
     tf.get_logger().setLevel(logging.ERROR)
     return tf
+
+
+def lpfilter(input_signal, win):
+    kernel = np.lib.pad(np.linspace(1, 3, win), (0, win - 1), "reflect")
+    kernel = np.divide(kernel, np.sum(kernel))
+    output_signal = ndimage.convolve(input_signal, kernel)
+    return output_signal

@@ -40,19 +40,21 @@ class LED:
 
         self.decoded_future = self.autoencoder.decode(self.forecast)
 
+
     def compute_error(self):
 
-        decoded_data = self.get_snapshot(times=np.arange(self.T_micro,self.T_macro))
-        diff_data = decoded_data - self.test_data
-        err = np.zeros(np.shape(decoded_data)[1:2])
+        decoded_data = self.decoded_future[self.window_size:]
+        diff_data = decoded_data - self.data[self.window_size:self.window_size+self.length_prediction]
+        err = np.zeros(np.shape(decoded_data)[1:3])
 
         for x in range(np.shape(decoded_data)[1]):
             for y in range(np.shape(decoded_data)[2]):
-                err[x,y] = np.linalg.norm(diff_data,ord=np.inf)
+                err[x,y] = np.linalg.norm(diff_data[:,x,y,0],ord=np.inf) + \
+                           np.linalg.norm(diff_data[:,x,y,1],ord=np.inf)
 
         return err
 
-    def get_snapshot(self,times):
+    def get_snapshot2(self,times):
 
         #TODO: fare un check cosa succede in base a che oggetto è times (array vs intero)
 
@@ -64,7 +66,7 @@ class LED:
 
         return snapshots
     
-    def get_particle(self,x,y,plot=False):
+    def get_particle2(self,x,y,plot=False):
         
         particle = self.get_snapshot(times=np.arange(self.T_micro,self.T_macro))[:,x,y,:]
 
