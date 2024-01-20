@@ -2,30 +2,9 @@ import numpy as np
 import os
 from tqdm.auto import tqdm
 
-#from scripts.utils.utils import import_tensorflow#, lpfilter
-
-def import_tensorflow():
-    # Filter tensorflow version warnings
-    import os
-
-    # https://stackoverflow.com/questions/40426502/is-there-a-way-to-suppress-the-messages-tensorflow-prints/40426709
-    os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"  # or any {'0', '1', '2'}
-    import warnings
-
-    # https://stackoverflow.com/questions/15777951/how-to-suppress-pandas-future-warning
-    warnings.simplefilter(action="ignore", category=FutureWarning)
-    warnings.simplefilter(action="ignore", category=Warning)
-    import tensorflow as tf
-
-    tf.get_logger().setLevel("INFO")
-    tf.autograph.set_verbosity(0)
-    import logging
-
-    tf.get_logger().setLevel(logging.ERROR)
-    return tf
+from scripts.utils.utils import import_tensorflow, lpfilter
 
 tf = import_tensorflow()
-
 tfk = tf.keras
 tfkl = tfk.layers
 
@@ -118,6 +97,9 @@ class Autoencoder:
                 self.data.append(X[i, j])
         self.data = np.array(self.data)
         
+        if len(np.shape(self.data))==2:
+            self.data = np.reshape(self.data,(np.shape(self.data)[0],1,1,np.shape(self.data)[-1]))
+
         self.input_shape = (self.data.shape[1], self.data.shape[2], self.data.shape[3])
         self.output_shape = self.input_shape
 
@@ -355,55 +337,87 @@ class Asymmetrical_Autoencoder(Autoencoder):
            validation_split=self.validation_split,
            callbacks=self.callbacks,
        ).history
+
+class Autoencoder_identity(Autoencoder):
+    def __init__(
+        self,
+        model_name=None,
+        loss=tfk.losses.MeanSquaredError(),
+        optimizer=tfk.optimizers.Adam(),
+        metrics=["mae"]
+    ):
+        super().__init__(model_name=model_name, loss=loss, optimizer=optimizer, 
+                         metrics=metrics)
        
-      
-       
-a = Asymmetrical_Autoencoder(epochs=1000, conv=[(8,3),(16,3),(32,3)], dense=[32,64])
-a.get_data('../../data/dataset/merged_dataset.npz', compressed_name='my_data')
+    def build_model(self,summary=False):
 
-a.build_model(summary=False)
+        AE = tfkl.Input(shape=(self.input_shape))
 
-a.train_model()
+        self.autoencoder = tfk.Model(inputs=AE, outputs=AE, name="Autoencoder")
 
-name = 'Asym_test'
-file_path = "../../models/" + name + "/" + name
-if not os.path.exists(file_path):
-    os.makedirs(file_path)
+        # Compile model
+        self.autoencoder.compile(
+            loss=self.loss, optimizer=self.optimizer, metrics=self.metrics
+        )
 
-model_json = a.autoencoder.to_json()
-with open(file_path + ".json", "w") as json_file:
-    json_file.write(model_json)
-a.autoencoder.save_weights(file_path + ".h5")
+        self.encoder = self.autoencoder
+        self.decoder = self.autoencoder
+
+        if summary:
+            self.autoencoder.summary(expand_nested=True)
+
+    def train_model(self):
+
+        raise ValueError("Autoencoder Identity does not support training")
 
 
-encoded = a.encode(a.in_test_data)
-decoded = a.decode(encoded)
 
-print(np.shape(a.in_test_data))
-print(np.shape(a.out_test_data))
-print(np.shape(decoded))
+# a = Asymmetrical_Autoencoder(epochs=1000, conv=[(8,3),(16,3),(32,3)], dense=[32,64])
+# a.get_data('../../data/dataset/merged_dataset.npz', compressed_name='my_data')
 
-import matplotlib.pyplot as plt
+# a.build_model(summary=False)
 
-for i in [10*i for i in range(10)]:
-    fig, ax = plt.subplots(2,1)
-    ax[0].imshow(a.out_test_data[i,:,:,0])
-    im = ax[1].imshow(decoded[i,:,:,0])
-    cbar = fig.colorbar(im,ax=ax.ravel().tolist())
-    cbar.set_ticks(np.arange(0,1,0.5))
-    plt.show()
+# a.train_model()
+
+# name = 'Asym_test'
+# file_path = "../../models/" + name + "/" + name
+# if not os.path.exists(file_path):
+#     os.makedirs(file_path)
+
+# model_json = a.autoencoder.to_json()
+# with open(file_path + ".json", "w") as json_file:
+#     json_file.write(model_json)
+# a.autoencoder.save_weights(file_path + ".h5")
+
+
+# encoded = a.encode(a.in_test_data)
+# decoded = a.decode(encoded)
+
+# print(np.shape(a.in_test_data))
+# print(np.shape(a.out_test_data))
+# print(np.shape(decoded))
+
+# import matplotlib.pyplot as plt
+
+# for i in [10*i for i in range(10)]:
+#     fig, ax = plt.subplots(2,1)
+#     ax[0].imshow(a.out_test_data[i,:,:,0])
+#     im = ax[1].imshow(decoded[i,:,:,0])
+#     cbar = fig.colorbar(im,ax=ax.ravel().tolist())
+#     cbar.set_ticks(np.arange(0,1,0.5))
+#     plt.show()
     
-for i in [5,10]:
-    fig, ax = plt.subplots(2,1)
-    ax[0].plot(decoded[:,i,i,0])
-    ax[0].plot(a.out_test_data[:,i,i,0])
-    ax[0].legend(['predicted','real'])
-    #ax[0].title('u component')
-    ax[1].plot(decoded[:,i,i,1])
-    ax[1].plot(a.out_test_data[:,i,i,1])
-    ax[1].legend(['predicted','real'])
-    #ax[1].title('v component')
-    plt.show()
+# for i in [5,10]:
+#     fig, ax = plt.subplots(2,1)
+#     ax[0].plot(decoded[:,i,i,0])
+#     ax[0].plot(a.out_test_data[:,i,i,0])
+#     ax[0].legend(['predicted','real'])
+#     #ax[0].title('u component')
+#     ax[1].plot(decoded[:,i,i,1])
+#     ax[1].plot(a.out_test_data[:,i,i,1])
+#     ax[1].legend(['predicted','real'])
+#     #ax[1].title('v component')
+#     plt.show()
     
     
     
