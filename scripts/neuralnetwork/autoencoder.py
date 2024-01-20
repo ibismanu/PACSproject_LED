@@ -59,8 +59,8 @@ class Autoencoder:
         tfk.utils.set_random_seed(self.seed)
 
     def load_model(self, model_name):
-        path = "models/" + model_name + "/" + model_name
-
+        path = "../../models/" + model_name + "/" + model_name
+        
         with open(path + ".json", "r") as json_file:
             model_json = json_file.read()
 
@@ -230,7 +230,7 @@ class Autoencoder:
         ).history
 
     def save_model(self, name):
-        file_path = "models/" + name + "/" + name
+        file_path = "../../models/" + name + "/" + name
         if not os.path.exists(file_path):
             os.makedirs(file_path)
 
@@ -242,12 +242,12 @@ class Autoencoder:
     def encode(self, raw_data, smooth=False, save=False):
         encoded_data = self.encoder.predict(raw_data, verbose=0)
 
-        # if smooth:
-        #     for i in range(self.latent_dim):
-        #         encoded_data[:, i] = lpfilter(encoded_data[:, i], 10)
+        if smooth:
+            for i in range(self.latent_dim):
+                encoded_data[:, i] = lpfilter(encoded_data[:, i], 10)
 
         if save:
-            np.save("dataset/encoded_data.npy", encoded_data)
+            np.save("../../dataset/encoded_data.npy", encoded_data)
         else:
             return encoded_data
 

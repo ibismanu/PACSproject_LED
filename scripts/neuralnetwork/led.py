@@ -1,9 +1,12 @@
+# import sys
+# sys.path.append('..\..')
+
 import numpy as np
 import matplotlib.pyplot as plt
 
-from scripts.neuralnetwork.autoencoder import Autoencoder
-from scripts.neuralnetwork.rnn import RNN
 from scripts.utils.utils import import_tensorflow
+from scripts.NeuralNetwork.autoencoder import Autoencoder
+from scripts.NeuralNetwork.rnn import RNN
 
 tf = import_tensorflow()
 tfk = tf.keras
@@ -12,10 +15,8 @@ tfkl = tfk.layers
 
 class LED:
     def __init__(
-        self, data_path, autoencoder_name, rnn_name, length_prediction, smooth=True
+        self, autoencoder_name, rnn_name, length_prediction, smooth=True
     ):
-        self.get_data(data_path)
-
         self.autoencoder = Autoencoder(model_name=autoencoder_name)
         self.latent_dim = self.autoencoder.encoder.output_shape[-1]
 
@@ -25,9 +26,17 @@ class LED:
         self.length_prediction = length_prediction
         self.smooth = smooth
 
-    def get_data(self, data_path):
-        self.data = np.load(data_path)["test_data"][0]  # TODO better
+    def get_data(self, data_path,compressed_name='arr_0'):
 
+        if data_path[-4:] == ".npy":
+            self.data = np.load(data_path)[0]
+        elif data_path[-4:] == ".npz":
+            self.data = np.load(data_path)[compressed_name][0]
+        elif data_path[-4:] == ".csv":
+            self.data = np.loadtxt(data_path, delimiter=",")[0]
+        else:
+            raise ValueError("File type not supported")
+        
     def run(self):
         self.encoded_data = self.autoencoder.encode(self.data, smooth=self.smooth)
 

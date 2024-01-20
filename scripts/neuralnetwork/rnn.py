@@ -62,7 +62,7 @@ class RNN:
         tfk.utils.set_random_seed(self.seed)
 
     def load_model(self, model_name):
-        path = "models/" + model_name + "/" + model_name
+        path = "../../models/" + model_name + "/" + model_name
 
         with open(path + ".json", "r") as json_file:
             model_json = json_file.read()
@@ -185,7 +185,7 @@ class RNN:
         ).history
 
     def save_model(self, name):
-        file_path = "models/" + name + "/" + name
+        file_path = "../../models/" + name + "/" + name
         if not os.path.exists(file_path):
             os.makedirs(file_path)
 
