@@ -2,7 +2,27 @@ import numpy as np
 import os
 from tqdm.auto import tqdm
 
-from scripts.utils.utils import import_tensorflow, lpfilter
+#from scripts.utils.utils import import_tensorflow#, lpfilter
+
+def import_tensorflow():
+    # Filter tensorflow version warnings
+    import os
+
+    # https://stackoverflow.com/questions/40426502/is-there-a-way-to-suppress-the-messages-tensorflow-prints/40426709
+    os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"  # or any {'0', '1', '2'}
+    import warnings
+
+    # https://stackoverflow.com/questions/15777951/how-to-suppress-pandas-future-warning
+    warnings.simplefilter(action="ignore", category=FutureWarning)
+    warnings.simplefilter(action="ignore", category=Warning)
+    import tensorflow as tf
+
+    tf.get_logger().setLevel("INFO")
+    tf.autograph.set_verbosity(0)
+    import logging
+
+    tf.get_logger().setLevel(logging.ERROR)
+    return tf
 
 tf = import_tensorflow()
 
@@ -72,24 +92,37 @@ class Autoencoder:
         self.decoder = self.autoencoder.get_layer("Decoder")
 
     def get_data(self, file_path, compressed_name="arr_0"):
-        match file_path[-4:]:
-            case ".npy":
-                X = np.load(file_path)
-            case ".npz":
-                X = np.load(file_path)[compressed_name]
-            case ".csv":
-                X = np.loadtxt(file_path, delimiter=",")
-            case _:
-                raise ValueError("File type not supported")
+        
+        if file_path[-4:] == ".npy":
+            X = np.load(file_path)
+        elif file_path[-4:] == ".npz":
+            X = np.load(file_path)[compressed_name]
+        elif file_path[-4:] == ".csv":
+            X = np.loadtxt(file_path, delimiter=",")
+        else:
+            raise ValueError("File type not supported")
+            
+        # match file_path[-4:]:
+        #     case ".npy":
+        #         X = np.load(file_path)
+        #     case ".npz":
+        #         X = np.load(file_path)[compressed_name]
+        #     case ".csv":
+        #         X = np.loadtxt(file_path, delimiter=",")
+        #     case _:
+        #         raise ValueError("File type not supported")
 
         self.data = []
         for i in tqdm(range(np.shape(X)[0])):
             for j in range(np.shape(X)[1]):
                 self.data.append(X[i, j])
         self.data = np.array(self.data)
+        
+        self.input_shape = (self.data.shape[1], self.data.shape[2], self.data.shape[3])
+        self.output_shape = self.input_shape
 
     def build_model(self, summary=False):
-        self.input_shape = (self.data.shape[1], self.data.shape[2], self.data.shape[3])
+        
         x = int(self.input_shape[0])
 
         # Initialize Encoder and Decoder
@@ -101,15 +134,27 @@ class Autoencoder:
         D.insert(
             0,
             tfkl.Conv2DTranspose(
-                self.input_shape[-1],
-                kernel_size=(1, 1),
+                self.output_shape[-1],
+                kernel_size=(2, 2),
                 strides=(1, 1),
                 padding="same",
                 activation="linear",
             ),
         )
-
-        # Convolutional layers
+        
+        if self.input_shape != self.output_shape:
+            D.insert(
+                0,
+                tfkl.Conv2DTranspose(
+                    self.output_shape[-1],
+                    kernel_size=(1, 1),
+                    strides=(2, 2),
+                    padding="same",
+                    activation="linear",
+                ),
+            )
+            
+        # Convolutional layers  
         for layer in self.conv:
             E.append(
                 tfkl.Conv2D(
@@ -215,9 +260,9 @@ class Autoencoder:
     def encode(self, raw_data, smooth=False, save=False):
         encoded_data = self.encoder.predict(raw_data, verbose=0)
 
-        if smooth:
-            for i in range(self.latent_dim):
-                encoded_data[:, i] = lpfilter(encoded_data[:, i], 10)
+        # if smooth:
+        #     for i in range(self.latent_dim):
+        #         encoded_data[:, i] = lpfilter(encoded_data[:, i], 10)
 
         if save:
             np.save("dataset/encoded_data.npy", encoded_data)
@@ -231,3 +276,134 @@ class Autoencoder:
             np.save("dataset/decoded_data.npy", decoded_data)
         else:
             return decoded_data
+
+class Asymmetrical_Autoencoder(Autoencoder):
+    def __init__(
+        self,
+        seed=42,
+        model_name=None,
+        latent_dim=10,
+        conv=[(8, 3), (16, 3), (32, 3)],
+        dense=[64, 128],
+        activation="elu",
+        dropout_rate=0.2,
+        loss=tfk.losses.MeanSquaredError(),
+        optimizer=tfk.optimizers.Adam(),
+        metrics=["mae"],
+        batch_size=32,
+        epochs=500,
+        validation_split=0.2,
+        callbacks=None,
+    ):
+        super().__init__(seed, model_name, latent_dim, conv, dense, activation, dropout_rate,
+                       loss, optimizer, metrics, batch_size, epochs, validation_split, callbacks)
+        
+    def get_data(self, file_path, compressed_name="arr_0"):
+       
+       if file_path[-4:] == ".npy":
+           X = np.load(file_path)
+       elif file_path[-4:] == ".npz":
+           X = np.load(file_path)[compressed_name]
+       elif file_path[-4:] == ".csv":
+           X = np.loadtxt(file_path, delimiter=",")
+       else:
+           raise ValueError("File type not supported")
+           
+       self.out_test_data = X[-1]
+       self.in_test_data = self.out_test_data[:,::2,::2,:]
+       X = X[:900]
+       
+       # match file_path[-4:]:
+       #     case ".npy":
+       #         X = np.load(file_path)
+       #     case ".npz":
+       #         X = np.load(file_path)[compressed_name]
+       #     case ".csv":
+       #         X = np.loadtxt(file_path, delimiter=",")
+       #     case _:
+       #         raise ValueError("File type not supported")
+
+       self.output_data = []
+       for i in tqdm(range(np.shape(X)[0])):
+           for j in range(np.shape(X)[1]):
+               self.output_data.append(X[i, j])
+       self.output_data = np.array(self.output_data)
+       self.input_data = self.output_data[:,::2,::2,:]
+       
+       self.input_shape = (self.input_data.shape[1], self.input_data.shape[2], self.input_data.shape[3])
+       self.output_shape = (self.output_data.shape[1], self.output_data.shape[2], self.output_data.shape[3])    
+
+   
+    def train_model(self):
+       self.set_seed()
+
+       if self.callbacks is None:
+           self.callbacks = [
+               tfk.callbacks.EarlyStopping(
+                   monitor="val_loss", patience=10, restore_best_weights=True
+               ),
+               # tfk.callbacks.ReduceLROnPlateau(
+               #     monitor="val_loss", patience=5, factor=0.5, min_lr=1e-5
+               # ),
+           ]
+
+       history = self.autoencoder.fit(
+           self.input_data,
+           self.output_data,
+           batch_size=self.batch_size,
+           epochs=self.epochs,
+           validation_split=self.validation_split,
+           callbacks=self.callbacks,
+       ).history
+       
+      
+       
+a = Asymmetrical_Autoencoder(epochs=1000, conv=[(8,3),(16,3),(32,3)], dense=[32,64])
+a.get_data('../../data/dataset/merged_dataset.npz', compressed_name='my_data')
+
+a.build_model(summary=False)
+
+a.train_model()
+
+name = 'Asym_test'
+file_path = "../../models/" + name + "/" + name
+if not os.path.exists(file_path):
+    os.makedirs(file_path)
+
+model_json = a.autoencoder.to_json()
+with open(file_path + ".json", "w") as json_file:
+    json_file.write(model_json)
+a.autoencoder.save_weights(file_path + ".h5")
+
+
+encoded = a.encode(a.in_test_data)
+decoded = a.decode(encoded)
+
+print(np.shape(a.in_test_data))
+print(np.shape(a.out_test_data))
+print(np.shape(decoded))
+
+import matplotlib.pyplot as plt
+
+for i in [10*i for i in range(10)]:
+    fig, ax = plt.subplots(2,1)
+    ax[0].imshow(a.out_test_data[i,:,:,0])
+    im = ax[1].imshow(decoded[i,:,:,0])
+    cbar = fig.colorbar(im,ax=ax.ravel().tolist())
+    cbar.set_ticks(np.arange(0,1,0.5))
+    plt.show()
+    
+for i in [5,10]:
+    fig, ax = plt.subplots(2,1)
+    ax[0].plot(decoded[:,i,i,0])
+    ax[0].plot(a.out_test_data[:,i,i,0])
+    ax[0].legend(['predicted','real'])
+    #ax[0].title('u component')
+    ax[1].plot(decoded[:,i,i,1])
+    ax[1].plot(a.out_test_data[:,i,i,1])
+    ax[1].legend(['predicted','real'])
+    #ax[1].title('v component')
+    plt.show()
+    
+    
+    
