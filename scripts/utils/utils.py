@@ -41,21 +41,23 @@ def integral(g, j, p):
     weights = 0.5 * weights
     return np.sum(np.array([weights[i] * g(nodes[i], j) for i in range(deg)]))
 
+
 def build_sequences(data, window, stride=1, telescope=1):
-    #data should have shape (latent_dim, timesteps)
-    
+    # data should have shape (latent_dim, timesteps)
+
     assert window % stride == 0
-    
+
     data = np.transpose(data)
-    
+
     dataset = []
     target = []
-        
-    for idx in np.arange(0,data.shape[1]-window-telescope,stride):
-        dataset.append(np.transpose(data[:,idx:idx+window]))
-        target.append(np.transpose(data[:,idx+window:idx+window+telescope]))
-    
-    return np.array(dataset),np.array(target)
+
+    for idx in np.arange(0, data.shape[1] - window - telescope, stride):
+        dataset.append(np.transpose(data[:, idx : idx + window]))
+        target.append(np.transpose(data[:, idx + window : idx + window + telescope]))
+
+    return np.array(dataset), np.array(target)
+
 
 def import_tensorflow():
     # Filter tensorflow version warnings
@@ -78,8 +80,21 @@ def import_tensorflow():
     return tf
 
 
-def lpfilter(input_signal, win):
-    kernel = np.lib.pad(np.linspace(1, 3, win), (0, win - 1), "reflect")
-    kernel = np.divide(kernel, np.sum(kernel))
-    output_signal = ndimage.convolve(input_signal, kernel)
-    return output_signal
+def smooth_filter(y, window_size, order):
+    half_window = (window_size - 1) // 2
+
+    b = np.mat(
+        [
+            [k**i for i in range(order + 1)]
+            for k in range(-half_window, half_window + 1)
+        ]
+    )
+
+    m = np.linalg.pinv(b).A[0]
+
+    firstvals = y[0] - np.abs(y[1 : half_window + 1][::-1] - y[0])
+    lastvals = y[-1] + np.abs(y[-half_window - 1 : -1][::-1] - y[-1])
+
+    y = np.concatenate((firstvals, y, lastvals))
+
+    return np.convolve(m[::-1], y, mode="valid")

@@ -2,7 +2,7 @@ import numpy as np
 import os
 from tqdm.auto import tqdm
 
-from scripts.utils.utils import import_tensorflow, lpfilter
+from scripts.utils.utils import import_tensorflow, smooth_filter
 
 tf = import_tensorflow()
 tfk = tf.keras
@@ -244,7 +244,7 @@ class Autoencoder:
 
         if smooth:
             for i in range(self.latent_dim):
-                encoded_data[:, i] = lpfilter(encoded_data[:, i], 10)
+                encoded_data[:, i] = smooth_filter(encoded_data[:, i], 31, 2)
 
         if save:
             np.save("../../dataset/encoded_data.npy", encoded_data)

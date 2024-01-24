@@ -5,8 +5,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from scripts.utils.utils import import_tensorflow
-from scripts.NeuralNetwork.autoencoder import Autoencoder
-from scripts.NeuralNetwork.rnn import RNN
+from scripts.neuralnetwork.autoencoder import Autoencoder
+from scripts.neuralnetwork.rnn import RNN
 
 tf = import_tensorflow()
 tfk = tf.keras
