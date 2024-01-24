@@ -230,14 +230,14 @@ class Autoencoder:
         ).history
 
     def save_model(self, name):
-        file_path = "../../models/" + name + "/" + name
+        file_path = "../../models/" + name
         if not os.path.exists(file_path):
             os.makedirs(file_path)
 
         model_json = self.autoencoder.to_json()
-        with open(file_path + ".json", "w") as json_file:
+        with open(file_path +'/'+ name +".json", "w") as json_file:
             json_file.write(model_json)
-        self.autoencoder.save_weights(file_path + ".h5")
+        self.autoencoder.save_weights(file_path +'/' + name + ".h5")
 
     def encode(self, raw_data, smooth=False, save=False):
         encoded_data = self.encoder.predict(raw_data, verbose=0)

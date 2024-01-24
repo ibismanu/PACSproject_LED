@@ -5,8 +5,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from scripts.utils.utils import import_tensorflow
-from scripts.neuralnetwork.autoencoder import Autoencoder
-from scripts.neuralnetwork.rnn import RNN
+from scripts.NeuralNetwork.autoencoder import Autoencoder
+from scripts.NeuralNetwork.rnn import RNN
 
 tf = import_tensorflow()
 tfk = tf.keras
@@ -77,7 +77,7 @@ class LED:
     
     def get_particle2(self,x,y,plot=False):
         
-        particle = self.get_snapshot(times=np.arange(self.T_micro,self.T_macro))[:,x,y,:]
+        particle = self.get_snapshot2(times=np.arange(self.T_micro,self.T_macro))[:,x,y,:]
 
         if plot:
             num_variables = np.shape(particle)[-1]
