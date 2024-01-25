@@ -10,8 +10,8 @@ tfkl = tfk.layers
 class RNN:
     def __init__(
         self,
-        window_size,
         seed=42,
+        window_size=100,
         model_name=None,
         lstm=[64, 128, 256],
         bidirectional=True,
@@ -70,9 +70,7 @@ class RNN:
         self.rnn = tfk.models.model_from_json(model_json)
         self.rnn.load_weights(path + ".h5")
 
-        for layer in self.rnn.layers:
-            if isinstance(layer, tfk.layers.LSTM):  
-                return layer.input_shape[1]
+        self.window_size = self.rnn.input_shape[-2]
 
     def get_data(self, file_path, compressed_name="arr_0"):
         match file_path[-4:]:
