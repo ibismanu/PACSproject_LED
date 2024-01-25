@@ -11,10 +11,17 @@ class DataGen(ABC):
         pass
 
     def save_sample(self, name):
-        match name[-4:]:
-            case ".npy":
-                np.save("../../dataset/samples/" + name, self.sample)
-            case ".npz":
-                np.savez_compressed("../../dataset/samples/" + name, my_data=self.sample)
-            case _:
-                pass
+        if name[-4:]==".npy":
+            np.save("../../dataset/samples/" + name, self.sample)
+        elif name[-4:]==".npz":
+            np.savez_compressed("../../dataset/samples/" + name, my_data=self.sample)
+        else:
+            pass
+                
+        # match name[-4:]:
+        #     case ".npy":
+        #         np.save("../../dataset/samples/" + name, self.sample)
+        #     case ".npz":
+        #         np.savez_compressed("../../dataset/samples/" + name, my_data=self.sample)
+        #     case _:
+        #         pass

@@ -8,7 +8,7 @@ from scripts.utils.params import SolverParams
 
 class GenerateParticle(ABC):
     
-    @singledispatchmethod
+    #@singledispatchmethod
     def __init__(
         self,
         params,
@@ -34,14 +34,14 @@ class GenerateParticle(ABC):
 
         self.u[:, 0] = self.u0
         
-    @__init__.register(str)
-    def _from_file(
-        self,
-        params,
-        f=None
-    ):
-        P = SolverParams.get_from_file(params)
-        self. __init__(P, f)
+    # @__init__.register(str)
+    # def _from_file(
+    #     self,
+    #     params,
+    #     f=None
+    # ):
+    #     P = SolverParams.get_from_file(params)
+    #     self. __init__(P, f)
         
     @abstractmethod
     def generateODE(self):

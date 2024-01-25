@@ -31,15 +31,20 @@ class FitzhugNagumo(DataGen):
             (self.num_it + 1, grid_size[0], grid_size[1], len(params.u0))
         )
 
-        match self.params.solver_name:
-            case "thetamethod":
-                self.solver = ThetaMethod(
-                    params
-                )
-            case "rungekutta":
-                self.solver = RKHeun(params)
-            case "multistep":
-                self.solver = AdamsBashforth(params)
+        # match self.params.solver_name:
+        #     case "thetamethod":
+        #         self.solver = ThetaMethod(params)
+        #     case "rungekutta":
+        #         self.solver = RKHeun(params)
+        #     case "multistep":
+        #         self.solver = AdamsBashforth(params)
+                
+        if self.params.solver_name=="thetamethod":
+            self.solver = ThetaMethod(params)
+        elif self.params.solver_name=="rungekutta":
+            self.solver = RKHeun(params)
+        elif self.params.solver_name=="multistep":
+            self.solver = AdamsBashforth(params)
 
     def generate_sample(self, name, x0=None, plot=False):
         if x0 is None:

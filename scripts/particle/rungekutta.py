@@ -10,7 +10,6 @@ class RungeKutta(GenerateParticle):
     @singledispatchmethod
     def __init__(self, params, f=None):
 
-        super().__init__(params=params,f=f)
 
         self.A = params.RK_A
         self.b = params.RK_b
@@ -18,11 +17,13 @@ class RungeKutta(GenerateParticle):
         self.order = len(self.c)
 
         check_butcher_sum(A=self.A, b=self.b, c=self.c, s=self.order)
+        
+        super().__init__(params=params,f=f)
 
     @__init__.register(str)
     def _from_file(self, params, f=None):
         P = SolverParams.get_from_file(filedir=params)
-        self. __init__(P, f)
+        self.__init__(P, f)
 
 class RKExplicit(RungeKutta):
     @singledispatchmethod
@@ -34,7 +35,7 @@ class RKExplicit(RungeKutta):
     @__init__.register(str)
     def _from_file(self, params, f=None):
         P = SolverParams.get_from_file(filedir=params)
-        self. __init__(P, f)
+        self.__init__(P, f)
         
     def generateODE(self):
         for n in range(self.num_it):
@@ -55,7 +56,7 @@ class RKSemiImplicit(RungeKutta):
     @__init__.register(str)
     def _from_file(self, params, f=None):
         P = SolverParams.get_from_file(filedir=params)
-        self. __init__(P, f)
+        self.__init__(P, f)
         
     def generateODE(self):
         for n in range(self.num_it):
@@ -84,9 +85,14 @@ class RKSemiImplicit(RungeKutta):
             self.u[:, n + 1] = self.u[:, n] + self.dt * np.dot(self.b, k)
 
 class RKImplicit(RungeKutta):
-    
+    @singledispatchmethod
     def __init__(self, params, f=None):
-        super.__init__(params,f)
+        super().__init__(params,f)
+    
+    @__init__.register(str)
+    def _from_file(self, params, f=None):
+        P = SolverParams.get_from_file(filedir=params)
+        self. __init__(P, f)
         
     def generateODE(self):
         tol = 1e-2
