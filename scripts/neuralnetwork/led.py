@@ -63,7 +63,7 @@ class LED:
 
         return err
 
-    def get_snapshot2(self,times):
+    def get_snapshot(self,times):
 
         #TODO: fare un check cosa succede in base a che oggetto è times (array vs intero)
 
@@ -75,9 +75,9 @@ class LED:
 
         return snapshots
     
-    def get_particle2(self,x,y,plot=False):
+    def get_particle(self,x,y,plot=False):
         
-        particle = self.get_snapshot2(times=np.arange(self.T_micro,self.T_macro))[:,x,y,:]
+        particle = self.get_snapshot(times=np.arange(self.window_size,self.length_prediction))[:,x,y,:]
 
         if plot:
             num_variables = np.shape(particle)[-1]
@@ -85,7 +85,7 @@ class LED:
             fig,axs = plt.subplots(num_variables,1,figsize=(8, 6))
 
             for i in range(num_variables):
-                axs[i].plot(np.arange(self.T_micro,self.T_macro), particle[:,i])
+                axs[i].plot(np.arange(self.window_size,self.length_prediction), particle[:,i])
                 axs[i].set_title('Component ',i)
 
             plt.tight_layout()

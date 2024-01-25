@@ -348,6 +348,19 @@ class Autoencoder_identity(Autoencoder):
     ):
         super().__init__(model_name=model_name, loss=loss, optimizer=optimizer, 
                          metrics=metrics)
+        
+    def load_model(self,model_name):
+
+        path = "../../models/" + model_name + "/" + model_name
+        
+        with open(path + ".json", "r") as json_file:
+            model_json = json_file.read()
+
+        self.autoencoder = tfk.models.model_from_json(model_json)
+        self.autoencoder.load_weights(path + ".h5")
+
+        self.encoder = self.autoencoder
+        self.decoder = self.autoencoder
        
     def build_model(self,summary=False):
 

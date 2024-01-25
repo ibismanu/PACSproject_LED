@@ -47,12 +47,3 @@ class AdamsBashforth(GenerateParticle):
                     * self.b[i]
                     * self.f(self.u[:, k + 1 + i], self.t[k + 1 + i])
                 )
-
-class AdamsMoulton(GenerateParticle):
-    # TODO
-    pass
-
-
-class BDF(GenerateParticle):
-    # TODO
-    pass
