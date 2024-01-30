@@ -8,9 +8,10 @@ tf = import_tensorflow()
 tfk = tf.keras
 tfkl = tfk.layers
 
+
 # Implement an autoencoer:
-#   - The encoder is composed by a sequence of 2D Convolutional layers 
-#       (number of filters and kernel size given by the user), followed by a flattening layer and 
+#   - The encoder is composed by a sequence of 2D Convolutional layers
+#       (number of filters and kernel size given by the user), followed by a flattening layer and
 #       dense layers (number of neurons given by user)
 #   - The decoder has a symmetrical structure with respect to the encoder, composed by dense layers
 #       followed by 2D transposed convolutional layers, with the same dimensions as the encoder's
@@ -58,7 +59,7 @@ class Autoencoder:
             self.load_model(model_name)
             self.latent_dim = self.encoder.output_shape[-1]
 
-    # For reproducibility 
+    # For reproducibility
     def set_seed(self):
         np.random.seed(self.seed)
         tf.random.set_seed(self.seed)
@@ -67,7 +68,7 @@ class Autoencoder:
     # Load existing model
     def load_model(self, model_name):
         path = "../../models/" + model_name + "/" + model_name
-        
+
         with open(path + ".json", "r") as json_file:
             model_json = json_file.read()
 
@@ -75,12 +76,11 @@ class Autoencoder:
         self.autoencoder = tfk.models.model_from_json(model_json)
         self.autoencoder.load_weights(path + ".h5")
 
-        self.encoder = self.autoencoder.get_layer("Encoder")        # Extract encoder
-        self.decoder = self.autoencoder.get_layer("Decoder")        # Extract decoder
+        self.encoder = self.autoencoder.get_layer("Encoder")  # Extract encoder
+        self.decoder = self.autoencoder.get_layer("Decoder")  # Extract decoder
 
     # Load data
     def get_data(self, file_path, compressed_name="arr_0"):
-        
         if file_path[-4:] == ".npy":
             X = np.load(file_path)
         elif file_path[-4:] == ".npz":
@@ -95,9 +95,11 @@ class Autoencoder:
             for j in range(np.shape(X)[1]):
                 self.data.append(X[i, j])
         self.data = np.array(self.data)
-        
-        if len(np.shape(self.data))==2:
-            self.data = np.reshape(self.data,(np.shape(self.data)[0],1,1,np.shape(self.data)[-1]))
+
+        if len(np.shape(self.data)) == 2:
+            self.data = np.reshape(
+                self.data, (np.shape(self.data)[0], 1, 1, np.shape(self.data)[-1])
+            )
 
         # Compute the shape for input data and output data
         self.input_shape = (self.data.shape[1], self.data.shape[2], self.data.shape[3])
@@ -105,7 +107,6 @@ class Autoencoder:
 
     # Create the structure of the autoencoder
     def build_model(self, summary=False):
-        
         x = int(self.input_shape[0])
 
         # Initialize Encoder and Decoder
@@ -124,7 +125,7 @@ class Autoencoder:
                 activation="linear",
             ),
         )
-        
+
         # For Asymmetrical autoencoders
         if self.input_shape != self.output_shape:
             D.insert(
@@ -137,8 +138,8 @@ class Autoencoder:
                     activation="linear",
                 ),
             )
-            
-        # Convolutional layers  
+
+        # Convolutional layers
         for layer in self.conv:
             E.append(
                 tfkl.Conv2D(
@@ -223,7 +224,7 @@ class Autoencoder:
                 #     monitor="val_loss", patience=5, factor=0.5, min_lr=1e-5
                 # ),
             ]
-            
+
         # Train model
         history = self.autoencoder.fit(
             self.data,
@@ -241,9 +242,9 @@ class Autoencoder:
             os.makedirs(file_path)
 
         model_json = self.autoencoder.to_json()
-        with open(file_path +'/'+ name +".json", "w") as json_file:
+        with open(file_path + "/" + name + ".json", "w") as json_file:
             json_file.write(model_json)
-        self.autoencoder.save_weights(file_path +'/' + name + ".h5")
+        self.autoencoder.save_weights(file_path + "/" + name + ".h5")
 
     # Encode raw data
     def encode(self, raw_data, smooth=False, save=False):
@@ -268,6 +269,31 @@ class Autoencoder:
         else:
             return decoded_data
 
+    # Calculate the error
+    def compute_error(self, test_data, type="inf", smooth=False):
+        pred = self.decode(self.encode(test_data, smooth=smooth))
+
+        err_list = np.zeros(len(test_data))
+
+        for i in range(len(test_data)):
+            if type == "inf":
+                err = np.max(np.abs(pred[i, :, :, 0] - test_data[i, :, :, 0])) + np.max(
+                    np.abs(pred[i, :, :, 1] - test_data[i, :, :, 1])
+                )
+            elif type == "L2":
+                err = np.sqrt(
+                    np.sum((pred[i, :, :, 0] - test_data[i, :, :, 0]) ** 2)
+                ) + np.sqrt(np.sum((pred[i, :, :, 1] - test_data[i, :, :, 1]) ** 2))
+
+            elif type == "L1":
+                err = np.sum(pred[i, :, :, 0] - test_data[i, :, :, 0]) + np.sum(
+                    pred[i, :, :, 1] - test_data[i, :, :, 1]
+                )
+            err_list.append(err)
+
+        return np.max(np.array(err_list))
+
+
 # Implement an autoencoder in which the input and an output data have different shapes.
 # This will be used to predict the entire data starting from subsamples
 class Asymmetrical_Autoencoder(Autoencoder):
@@ -288,80 +314,99 @@ class Asymmetrical_Autoencoder(Autoencoder):
         validation_split=0.2,
         callbacks=None,
     ):
-        super().__init__(seed, model_name, latent_dim, conv, dense, activation, dropout_rate,
-                       loss, optimizer, metrics, batch_size, epochs, validation_split, callbacks)
-    
+        super().__init__(
+            seed,
+            model_name,
+            latent_dim,
+            conv,
+            dense,
+            activation,
+            dropout_rate,
+            loss,
+            optimizer,
+            metrics,
+            batch_size,
+            epochs,
+            validation_split,
+            callbacks,
+        )
+
     # Load data
     def get_data(self, file_path, compressed_name="arr_0"):
-       
-       if file_path[-4:] == ".npy":
-           X = np.load(file_path)
-       elif file_path[-4:] == ".npz":
-           X = np.load(file_path)[compressed_name]
-       elif file_path[-4:] == ".csv":
-           X = np.loadtxt(file_path, delimiter=",")
-       else:
-           raise ValueError("File type not supported")
-           
+        if file_path[-4:] == ".npy":
+            X = np.load(file_path)
+        elif file_path[-4:] == ".npz":
+            X = np.load(file_path)[compressed_name]
+        elif file_path[-4:] == ".csv":
+            X = np.loadtxt(file_path, delimiter=",")
+        else:
+            raise ValueError("File type not supported")
 
-       self.output_data = []
-       for i in tqdm(range(np.shape(X)[0])):
-           for j in range(np.shape(X)[1]):
-               self.output_data.append(X[i, j])
-       self.output_data = np.array(self.output_data)
-       
-       # Compute input data as a subsample of the full dataset
-       self.input_data = self.output_data[:,::2,::2,:]
-       
-       # Compute input shape
-       self.input_shape = (self.input_data.shape[1], self.input_data.shape[2], self.input_data.shape[3])
-       
-       # Compute output shape
-       self.output_shape = (self.output_data.shape[1], self.output_data.shape[2], self.output_data.shape[3])    
+        self.output_data = []
+        for i in tqdm(range(np.shape(X)[0])):
+            for j in range(np.shape(X)[1]):
+                self.output_data.append(X[i, j])
+        self.output_data = np.array(self.output_data)
 
-   
+        # Compute input data as a subsample of the full dataset
+        self.input_data = self.output_data[:, ::2, ::2, :]
+
+        # Compute input shape
+        self.input_shape = (
+            self.input_data.shape[1],
+            self.input_data.shape[2],
+            self.input_data.shape[3],
+        )
+
+        # Compute output shape
+        self.output_shape = (
+            self.output_data.shape[1],
+            self.output_data.shape[2],
+            self.output_data.shape[3],
+        )
+
     # Train the model
     def train_model(self):
-       self.set_seed()
+        self.set_seed()
 
-       if self.callbacks is None:
-           self.callbacks = [
-               tfk.callbacks.EarlyStopping(
-                   monitor="val_loss", patience=10, restore_best_weights=True
-               ),
-               # tfk.callbacks.ReduceLROnPlateau(
-               #     monitor="val_loss", patience=5, factor=0.5, min_lr=1e-5
-               # ),
-           ]
+        if self.callbacks is None:
+            self.callbacks = [
+                tfk.callbacks.EarlyStopping(
+                    monitor="val_loss", patience=10, restore_best_weights=True
+                ),
+                # tfk.callbacks.ReduceLROnPlateau(
+                #     monitor="val_loss", patience=5, factor=0.5, min_lr=1e-5
+                # ),
+            ]
 
-       history = self.autoencoder.fit(
-           self.input_data,
-           self.output_data,
-           batch_size=self.batch_size,
-           epochs=self.epochs,
-           validation_split=self.validation_split,
-           callbacks=self.callbacks,
-       ).history
+        history = self.autoencoder.fit(
+            self.input_data,
+            self.output_data,
+            batch_size=self.batch_size,
+            epochs=self.epochs,
+            validation_split=self.validation_split,
+            callbacks=self.callbacks,
+        ).history
+
 
 # Implement an autoencoder whichsimply returns the data given in input
 # This will be used in problems with a low dimensionality, where there is no need to encode the data
 class Autoencoder_identity(Autoencoder):
-    
     def __init__(
         self,
         model_name=None,
         loss=tfk.losses.MeanSquaredError(),
         optimizer=tfk.optimizers.Adam(),
-        metrics=["mae"]
+        metrics=["mae"],
     ):
-        super().__init__(model_name=model_name, loss=loss, optimizer=optimizer, 
-                         metrics=metrics)
-        
-    # Load the model
-    def load_model(self,model_name):
+        super().__init__(
+            model_name=model_name, loss=loss, optimizer=optimizer, metrics=metrics
+        )
 
+    # Load the model
+    def load_model(self, model_name):
         path = "../../models/" + model_name + "/" + model_name
-        
+
         with open(path + ".json", "r") as json_file:
             model_json = json_file.read()
 
@@ -372,10 +417,9 @@ class Autoencoder_identity(Autoencoder):
         # Since the autoencoder is the identity, the encoder and the decoder are so as well
         self.encoder = self.autoencoder
         self.decoder = self.autoencoder
-       
-    # Build the identity
-    def build_model(self,summary=False):
 
+    # Build the identity
+    def build_model(self, summary=False):
         # Only layer
         AE = tfkl.Input(shape=(self.input_shape))
 
@@ -396,4 +440,4 @@ class Autoencoder_identity(Autoencoder):
 
     # Since the autoencoder doesn't require training, doing so results in an error
     def train_model(self):
-        pass#raise ValueError("Autoencoder Identity does not support training")
+        pass  # raise ValueError("Autoencoder Identity does not support training")
