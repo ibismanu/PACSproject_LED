@@ -4,6 +4,8 @@ import ast
 tfk = tf.keras
 tfkl = tfk.layers
 
+
+# Class used to compact the parameters for the different types of solvers
 class SolverParams:
     def __init__(
         self,

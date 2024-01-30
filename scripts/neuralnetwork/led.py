@@ -17,15 +17,18 @@ class LED:
     def __init__(
         self, autoencoder_name, rnn_name, length_prediction, smooth=True
     ):
+        # Import Autoencoder
         self.autoencoder = Autoencoder(model_name=autoencoder_name)
         self.latent_dim = self.autoencoder.encoder.output_shape[-1]
 
+        # Import Recurrent Neural Network
         self.rnn = RNN(model_name=rnn_name)
         self.window_size = self.rnn.rnn.input_shape[-2]
 
         self.length_prediction = length_prediction
         self.smooth = smooth
 
+    # Load data
     def get_data(self, data_path,compressed_name='arr_0'):
 
         if data_path[-4:] == ".npy":
@@ -36,49 +39,63 @@ class LED:
             self.data = np.loadtxt(data_path, delimiter=",")[0]
         else:
             raise ValueError("File type not supported")
-        
+    
+    # Run the LED for "length_prediction" steps
     def run(self):
+        
+        # Encode the sequence generated on the microscopic scale
         self.encoded_data = self.autoencoder.encode(self.data, smooth=self.smooth)
 
+        # Advance in time via the RNN
         future = self.rnn.predict_future(
             self.encoded_data[: self.window_size], self.length_prediction
         )
         self.forecast = np.concatenate(
             (self.encoded_data[: self.window_size], future), axis=0
         )
-
+        
+        # Decode the prediction
         self.decoded_future = self.autoencoder.decode(self.forecast)
 
-
-    def compute_error(self):
+    
+    # Compute an error estimation (L^order norm in time)
+    def compute_error(self, order=2):
 
         decoded_data = self.decoded_future[self.window_size:]
+        
+        # Compute difference array
         diff_data = decoded_data - self.data[self.window_size:self.window_size+self.length_prediction]
         err = np.zeros(np.shape(decoded_data)[1:3])
 
+        # Loop over space dimensions
         for x in range(np.shape(decoded_data)[1]):
             for y in range(np.shape(decoded_data)[2]):
-                err[x,y] = np.linalg.norm(diff_data[:,x,y,0],ord=np.inf) + \
-                           np.linalg.norm(diff_data[:,x,y,1],ord=np.inf)
+                # Compute error as the sum of the errors for each component
+                err[x,y] = np.linalg.norm(diff_data[:,x,y,0],ord=order) + \
+                           np.linalg.norm(diff_data[:,x,y,1],ord=order)
 
         return err
 
+    # Extract one or more snapshot of the solution at given times
     def get_snapshot(self,times):
 
         #TODO: fare un check cosa succede in base a che oggetto è times (array vs intero)
 
         snapshots = []
 
+    # Loop over desired times
         for time in times:
             encoded_snapshot = self.forecast[time]
             snapshots.append(self.autoencoder.decoder.predict(encoded_snapshot))
 
         return snapshots
     
+    # Extract the solution profile at any given point
     def get_particle(self,x,y,plot=False):
         
         particle = self.get_snapshot(times=np.arange(self.window_size,self.length_prediction))[:,x,y,:]
 
+        # If desired, plot the profile
         if plot:
             num_variables = np.shape(particle)[-1]
 

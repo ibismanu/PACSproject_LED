@@ -7,38 +7,38 @@ from scripts.utils.params import SolverParams
 from scripts.particle.thetamethod import ThetaMethod
 from scripts.particle.rungekutta import RKHeun
 from scripts.particle.multistep import AdamsBashforth
+from functools import singledispatchmethod
 
 def f_temp(x):
     return np.array([0])
 
-
+# Generate a dataset of data following the Fitzhug-Nagumo system of equation
+# The firing signal is assumed to be propagating radially
 class FitzhugNagumo(DataGen):
     params: SolverParams
 
+    @singledispatchmethod
     def __init__(
         self, params, k, alpha, epsilon, I, gamma, grid_size
     ):
+        # Simulation parameters
         self.params = params
+        
+        # Problem parameters
         self.k = k
         self.alpha = alpha
         self.epsilon = epsilon
         self.I = I
         self.gamma = gamma
+        
         self.grid_size = grid_size
         self.num_it = int(params.final_time / params.time_step)
 
+        # Solution inizialization 
         self.sample = np.zeros(
             (self.num_it + 1, grid_size[0], grid_size[1], len(params.u0))
         )
 
-        # match self.params.solver_name:
-        #     case "thetamethod":
-        #         self.solver = ThetaMethod(params)
-        #     case "rungekutta":
-        #         self.solver = RKHeun(params)
-        #     case "multistep":
-        #         self.solver = AdamsBashforth(params)
-                
         if self.params.solver_name=="thetamethod":
             self.solver = ThetaMethod(params)
         elif self.params.solver_name=="rungekutta":
@@ -46,7 +46,10 @@ class FitzhugNagumo(DataGen):
         elif self.params.solver_name=="multistep":
             self.solver = AdamsBashforth(params)
 
+    # Generate a single sample
     def generate_sample(self, name, x0=None, plot=False):
+        
+        # If the initial firing point is not gived, it is randomly generated in [0,1]^2
         if x0 is None:
             x0 = (np.random.uniform(0, 1), np.random.uniform(0, 1))
 
@@ -61,7 +64,8 @@ class FitzhugNagumo(DataGen):
             x = i * hx
             for j in range(self.grid_size[1]):
                 y = j * hy
-
+                
+                # Compute distance of current cell from firing point and time instant on which it will be reached by the stumili
                 distance = np.sqrt((x - x0[0]) ** 2 + (y - x0[1]) ** 2)
                 t_begin = distance / v
                 t_end = t_begin + length_t
@@ -84,11 +88,13 @@ class FitzhugNagumo(DataGen):
 
         self.save_sample(name)
 
+    # Create a dataset by generating multiple samples with different firing locations
     def generate_dataset(self, num_samples, num_processes, x0=None, plot=False):
         args = [("sample_" + str(i) + ".npy", x0, plot) for i in range(num_samples)]
 
         start = time.perf_counter()
-
+        
+        # The generation of samples is parallelized
         with Pool(processes=num_processes) as pool:
             pool.starmap(self.generate_sample, args)
 

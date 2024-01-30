@@ -3,6 +3,7 @@ import functools
 from scipy import ndimage
 
 
+# Wrapper function, used to convert the output of any given function to a numpy array
 def to_numpy(fun):
     @functools.wraps(fun)
     def wrapper(*args, **kwargs):
@@ -16,6 +17,7 @@ def to_numpy(fun):
     return wrapper
 
 
+# Check the stability of a given Runge-Kutta method
 def check_butcher_sum(A, b, c, s):
     tol = 1e-5
     valid_b = np.sum(b) == 1
@@ -26,37 +28,20 @@ def check_butcher_sum(A, b, c, s):
     assert valid_c, "invalid c component of butcher array"
     assert valid_size, "array sizes not compatible"
 
-
+# Check wether a given Runge-Kutta method is explicit or semi explicit
 def check_explicit_array(A, semi=False):
     if semi:
         return np.array_equal(A, np.tril(A))
     else:
         return np.array_equal(A, np.tril(A, -1))
 
-
+# Compute the numerical integral of the function g
 def integral(g, j, p):
     deg = (p + 1) // 2
     nodes, weights = np.polynomial.legendre.leggauss(deg=deg)
     nodes = 0.5 * (nodes + 1)
     weights = 0.5 * weights
     return np.sum(np.array([weights[i] * g(nodes[i], j) for i in range(deg)]))
-
-
-def build_sequences(data, window, stride=1, telescope=1):
-    # data should have shape (latent_dim, timesteps)
-
-    assert window % stride == 0
-
-    data = np.transpose(data)
-
-    dataset = []
-    target = []
-
-    for idx in np.arange(0, data.shape[1] - window - telescope, stride):
-        dataset.append(np.transpose(data[:, idx : idx + window]))
-        target.append(np.transpose(data[:, idx + window : idx + window + telescope]))
-
-    return np.array(dataset), np.array(target)
 
 
 def import_tensorflow():

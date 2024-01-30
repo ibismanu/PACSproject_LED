@@ -2,6 +2,7 @@ import numpy as np
 from abc import ABC, abstractmethod
 
 
+# Abstract class, used to generate the datasets on which the LED model will be trained and tested
 class DataGen(ABC):
     def __init__(self):
         self.sample = []
@@ -17,11 +18,3 @@ class DataGen(ABC):
             np.savez_compressed("../../dataset/samples/" + name, my_data=self.sample)
         else:
             pass
-                
-        # match name[-4:]:
-        #     case ".npy":
-        #         np.save("../../dataset/samples/" + name, self.sample)
-        #     case ".npz":
-        #         np.savez_compressed("../../dataset/samples/" + name, my_data=self.sample)
-        #     case _:
-        #         pass

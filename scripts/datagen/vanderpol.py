@@ -1,8 +1,6 @@
 # x' = mu*(x - 1/3 x^3 -y)
 # y' = 1/mu *x
 
-# NOTE: the paper AdaLed says that they do not use the Autoencoder
-
 import numpy as np
 import time
 from multiprocessing import Pool
@@ -13,24 +11,31 @@ from scripts.particle.thetamethod import ThetaMethod
 from scripts.particle.rungekutta import RKHeun
 from scripts.particle.multistep import AdamsBashforth
 
+
+# Generate a dataset of data following the Van Del Pol system of equation
 class VanDerPol(DataGen):
 
     params: SolverParams
 
     def __init__(self,params,mu):
+        
+        # Simulation parameters
         self.params = params
+        
+        # Problem parameter
         self.mu = mu
 
-        match self.params.solver_name:
-            case "thetamethod":
-                self.solver = ThetaMethod(params)
-            case "rungekutta":
-                self.solver = RKHeun(params)
-            case "multistep":
-                self.solver = AdamsBashforth(params)
+        if self.params.solver_name=="thetamethod":
+            self.solver = ThetaMethod(params)
+        elif self.params.solver_name=="rungekutta":
+            self.solver = RKHeun(params)
+        elif self.params.solver_name=="multistep":
+            self.solver = AdamsBashforth(params)
 
+    # Generate a single sample
     def generate_sample(self,name,x0=None,plot=False):
-
+        
+        # If the initial data is not gived, it is randomly generated in [-5,5]^2
         if x0 is None:
             self.solver.u0 = [np.random.uniform(-5, 5), np.random.uniform(-5, 5)]
             self.params.u0 = self.solver.u0
@@ -49,12 +54,14 @@ class VanDerPol(DataGen):
         self.sample = self.solver.u.transpose()
         self.save_sample(name)
 
-
+    
+    # Create a dataset by generating multiple samples with different initial data
     def generate_dataset(self, num_samples, num_processes, x0=None, plot=False):
         args = [("sample_" + str(i) + ".npy", x0, plot) for i in range(num_samples)]
 
         start = time.perf_counter()
-
+        
+        # The generation of samples is parallelizzed
         with Pool(processes=num_processes) as pool:
             pool.starmap(self.generate_sample, args)
 
