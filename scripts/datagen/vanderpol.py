@@ -10,6 +10,7 @@ from scripts.utils.params import SolverParams
 from scripts.particle.thetamethod import ThetaMethod
 from scripts.particle.rungekutta import RKHeun
 from scripts.particle.multistep import AdamsBashforth
+from functools import singledispatchmethod
 
 
 # Generate a dataset of data following the Van Del Pol system of equation
@@ -17,6 +18,7 @@ class VanDerPol(DataGen):
 
     params: SolverParams
 
+    @singledispatchmethod
     def __init__(self,params,mu):
         
         # Simulation parameters
@@ -32,6 +34,11 @@ class VanDerPol(DataGen):
         elif self.params.solver_name=="multistep":
             self.solver = AdamsBashforth(params)
 
+    @__init__.register(str)
+    def _from_file(self, params, mu):
+        P = SolverParams.get_from_file(filedir=params)
+        self.__init__(P, mu)
+        
     # Generate a single sample
     def generate_sample(self,name,x0=None,plot=False):
         

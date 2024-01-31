@@ -46,6 +46,11 @@ class FitzhugNagumo(DataGen):
         elif self.params.solver_name=="multistep":
             self.solver = AdamsBashforth(params)
 
+    @__init__.register(str)
+    def _from_file(self, params, k, alpha, epsilon, I, gamma, grid_size):
+        P = SolverParams.get_from_file(filedir=params)
+        self.__init__(P, k, alpha, epsilon, I, gamma, grid_size)
+        
     # Generate a single sample
     def generate_sample(self, name, x0=None, plot=False):
         
