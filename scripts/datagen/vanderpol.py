@@ -53,7 +53,7 @@ class VanDerPol(DataGen):
             ]
 
         self.solver.set_f(f)
-        self.solver.generateODE()
+        self.solver.generate()
         if plot:
             self.solver.plot_solution()
 

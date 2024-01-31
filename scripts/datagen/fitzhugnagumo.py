@@ -84,7 +84,7 @@ class FitzhugNagumo(DataGen):
 
                 self.solver.set_f(f)
                 self.solver.reset()
-                self.solver.generateODE()
+                self.solver.generate()
                 if plot:
                     self.solver.plot_solution()
 
