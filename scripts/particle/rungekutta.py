@@ -8,7 +8,7 @@ from scripts.utils.params import SolverParams
 
 # Use the Runge-Kutta method to solve the equation
 
-# "RungeKutta" objects cannot be instantiated the abstract method "generateODE" is not implemented
+# "RungeKutta" objects cannot be instantiated the abstract method "generate" is not implemented
 class RungeKutta(GenerateParticle):
     
     @singledispatchmethod
@@ -49,7 +49,7 @@ class RKExplicit(RungeKutta):
         P = SolverParams.get_from_file(filedir=params)
         self.__init__(P, f)
         
-    def generateODE(self):
+    def generate(self):
         
         # Loop over times
         for n in range(self.num_it):
@@ -79,7 +79,7 @@ class RKSemiImplicit(RungeKutta):
         P = SolverParams.get_from_file(filedir=params)
         self.__init__(P, f)
         
-    def generateODE(self):
+    def generate(self):
         
         # Loop over times
         for n in range(self.num_it):
@@ -124,7 +124,7 @@ class RKImplicit(RungeKutta):
         P = SolverParams.get_from_file(filedir=params)
         self. __init__(P, f)
         
-    def generateODE(self):
+    def generate(self):
         tol = 1e-2
         
         # Loop over times

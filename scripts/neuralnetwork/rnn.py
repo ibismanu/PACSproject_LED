@@ -31,10 +31,6 @@ class RNN:
         # Seed
         self.seed = seed
 
-        # For loading an existing model instead of building one
-        if model_name is not None:
-            self.load_model(model_name)
-
         # Window size
         self.window_size = window_size
 
@@ -56,6 +52,10 @@ class RNN:
         self.epochs = epochs
         self.validation_split = validation_split
         self.callbacks = callbacks
+
+        # For loading an existing model instead of building one
+        if model_name is not None:
+            self.load_model(model_name)
 
     # For reproducibility
     def set_seed(self):

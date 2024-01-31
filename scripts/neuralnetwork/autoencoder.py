@@ -18,9 +18,9 @@ tfkl = tfk.layers
 class Autoencoder:
     def __init__(
         self,
+        latent_dim,
         seed=42,
         model_name=None,
-        latent_dim=10,
         conv=[(8, 3), (16, 3), (32, 3)],
         dense=[64, 128],
         activation="elu",
@@ -78,6 +78,7 @@ class Autoencoder:
 
         self.encoder = self.autoencoder.get_layer("Encoder")  # Extract encoder
         self.decoder = self.autoencoder.get_layer("Decoder")  # Extract decoder
+        self.latent_dim = self.encoder.output_shape[-1]
 
     # Load data
     def get_data(self, file_path, compressed_name="arr_0"):
@@ -296,12 +297,12 @@ class Autoencoder:
 
 # Implement an autoencoder in which the input and an output data have different shapes.
 # This will be used to predict the entire data starting from subsamples
-class Asymmetrical_Autoencoder(Autoencoder):
+class Autoencoder_asymmetric(Autoencoder):
     def __init__(
         self,
+        latent_dim,
         seed=42,
         model_name=None,
-        latent_dim=10,
         conv=[(8, 3), (16, 3), (32, 3)],
         dense=[64, 128],
         activation="elu",
@@ -315,9 +316,9 @@ class Asymmetrical_Autoencoder(Autoencoder):
         callbacks=None,
     ):
         super().__init__(
+            latent_dim,
             seed,
             model_name,
-            latent_dim,
             conv,
             dense,
             activation,
@@ -400,7 +401,7 @@ class Autoencoder_identity(Autoencoder):
         metrics=["mae"],
     ):
         super().__init__(
-            model_name=model_name, loss=loss, optimizer=optimizer, metrics=metrics
+            latent_dim=None,model_name=model_name, loss=loss, optimizer=optimizer, metrics=metrics
         )
 
     # Load the model
@@ -421,10 +422,11 @@ class Autoencoder_identity(Autoencoder):
     # Build the identity
     def build_model(self, summary=False):
         # Only layer
-        AE = tfkl.Input(shape=(self.input_shape))
+        A = tfkl.Input(shape=(self.input_shape),name="Encoder")
+        E = tfkl.Input(shape=(self.input_shape),name="Decoder")
 
         # Build the autoencoder
-        self.autoencoder = tfk.Model(inputs=AE, outputs=AE, name="Autoencoder")
+        self.autoencoder = tfk.Model(inputs=A, outputs=E, name="Autoencoder")
 
         # Compile model
         self.autoencoder.compile(

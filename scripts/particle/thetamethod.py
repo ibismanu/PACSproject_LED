@@ -22,7 +22,7 @@ class ThetaMethod(GenerateParticle):
         P = SolverParams.get_from_file(filedir=params)
         self.__init__(P, f)
         
-    def generateODE(self):
+    def generate(self):
 
         self.u[:, 0] = self.u0
 

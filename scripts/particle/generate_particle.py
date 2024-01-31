@@ -43,7 +43,7 @@ class GenerateParticle(ABC):
         
         
     @abstractmethod
-    def generateODE(self):
+    def generate(self):
         # Abstract method, solve the equation
         pass
     
