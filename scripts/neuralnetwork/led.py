@@ -63,29 +63,58 @@ class LED:
         else: 
             self.decoded_future = self.autoencoder.decode(self.forecast)
 
-    # Compute an error estimation (L^order norm in time)
-    def compute_error(self, order=2):
+    # Compute a error estimations
+    def compute_error(self):
 
         decoded_data = self.decoded_future[self.window_size:]
         
         # Compute difference array
         diff_data = decoded_data - self.data[self.window_size:self.window_size+self.length_prediction]
 
-        # Loop over space dimensions
-        if len(np.shape(self.decoded_future))==4:
-            err = np.zeros(np.shape(decoded_data)[1:3])
+        
+        if len(np.shape(self.decoded_future)) == 4:
+            
+            # Inizialize error structures
+            err_particle = np.zeros(np.shape(decoded_data)[1:3])    # Particle error
+            err_snapshot = np.zeros(np.shape(decoded_data)[0])      # Snapshot error
+            err_model = 0                                           # Model error
+            
+            # Loop over particles
             for x in range(np.shape(decoded_data)[1]):
                 for y in range(np.shape(decoded_data)[2]):
                     # Compute error as the sum of the errors for each component
-                    err[x,y] = np.linalg.norm(diff_data[:,x,y,0],ord=order) + \
-                            np.linalg.norm(diff_data[:,x,y,1],ord=order)
+                    err_particle[x,y] = np.sqrt(np.linalg.norm(diff_data[:,x,y,0],ord=2)**2 + \
+                            np.linalg.norm(diff_data[:,x,y,1],ord=2)**2)
+              
+            # Loop over snapshots
+            for t in range(np.shape(decoded_data)[0]):
+                err_snapshot = np.sqrt(np.linalg.norm(diff_data[t,:,:,0],ord='fro')**2 + \
+                        np.linalg.norm(diff_data[t,:,:,1],ord='fro')**2)
                     
-        elif len(np.shape(self.decoded_future))==2:
-            err = np.linalg.norm(diff_data[:,0],ord=order) + \
-                    np.linalg.norm(diff_data[:,1],ord=order)
+            # Compute model error
+            err_model = np.sqrt(np.linalg.norm(err_particle,ord='fro'))
+
+                                
+        elif len(np.shape(self.decoded_future)) == 2:
+            
+            # Inizialize error structures
+            err_particle = 0                                        # Particle error
+            err_snapshot = np.zeros(np.shape(decoded_data)[0])      # Snapshot error
+            err_model = 0                                           # Model error
+            
+            # Compute particle error
+            err_particle = np.sqrt(np.linalg.norm(diff_data[:,0],ord=2)**2 + \
+            np.linalg.norm(diff_data[:,1],ord=2)**2)
+                
+            # Loop over snapshots
+            for t in range(np.shape(decoded_data)[0]):
+                err_snapshot[t] = np.linalg.norm(diff_data[t,:],ord=2)
+            
+            # Compute model error
+            err_model = err_snapshot
         
 
-        return err
+        return err_particle, err_snapshot, err_model
 
     # Extract one or more snapshot of the solution at given times
     def get_snapshot(self,times):

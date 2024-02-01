@@ -1,9 +1,9 @@
 import numpy as np
 import os
 
-from scripts.datagen.fitzhugnagumo import FitzhugNagumo
-from scripts.datagen.vanderpol import VanDerPol
-
+# from scripts.datagen.fitzhugnagumo import FitzhugNagumo
+# from scripts.datagen.vanderpol import VanDerPol
+from scripts.datagen.factory import Model_Factory
 
 def create_dataset(
     dataset_name,
@@ -18,24 +18,27 @@ def create_dataset(
 ):
     if generate:
 
-        if model_name=='Fitzhug Nagumo':
+        model = Model_Factory(model_name, solver_params, model_params)
+        model.generate_dataset(num_samples=num_samples, num_processes=num_processes)
+        
+        # if model_name=='Fitzhug Nagumo':
 
-            FN = FitzhugNagumo(
-                solver_params,
-                k=model_params.k,
-                alpha=model_params.alpha,
-                epsilon=model_params.epsilon,
-                I=model_params.I,
-                gamma=model_params.gamma,
-                grid_size=model_params.grid_size,
-            )
+        #     FN = FitzhugNagumo(
+        #         solver_params,
+        #         k=model_params.k,
+        #         alpha=model_params.alpha,
+        #         epsilon=model_params.epsilon,
+        #         I=model_params.I,
+        #         gamma=model_params.gamma,
+        #         grid_size=model_params.grid_size,
+        #     )
 
-            FN.generate_dataset(num_samples=num_samples, num_processes=num_processes)
+        #     FN.generate_dataset(num_samples=num_samples, num_processes=num_processes)
 
-        if model_name == 'Van Der Pol':
-            VDP = VanDerPol(solver_params,model_params)
+        # if model_name == 'Van Der Pol':
+        #     VDP = VanDerPol(solver_params,model_params)
 
-            VDP.generate_dataset(num_samples=num_samples,num_processes=num_processes)
+        #     VDP.generate_dataset(num_samples=num_samples,num_processes=num_processes)
 
     if batch_size is None:
         batch_size = num_samples
