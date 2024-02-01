@@ -9,20 +9,21 @@ from scripts.utils.params import SolverParams
 
 # Use a Multistep method to solve the equation
 
+
 # "Multistep" objects cannot be instantiated the abstract method "generate" is not implemented
 class Multistep(GenerateParticle):
-    def __init__(self, params,f=None):
+    def __init__(self, params, f=None):
         self.b = params.b
-        super().__init__(params,f)
+        super().__init__(params, f)
 
 
 class AdamsBashforth(Multistep):
-    
     @singledispatchmethod
-    def __init__(self, params,f=None):
+    def __init__(self, params, f=None):
         self.order = params.multi_order
-        super().__init__(params,f)
-        self.b = np.zeros(self.order)
+        params.b = np.zeros(self.order)
+
+        super().__init__(params, f)
 
         def g(v, j):
             return np.prod(np.array([v + i for i in range(self.order)])) / (v + j)
@@ -34,19 +35,18 @@ class AdamsBashforth(Multistep):
                 / (factorial(j) * factorial(self.order - j - 1))
                 * integral(g, j, self.order)
             )
-    
+
     # Constructor overloading
     @__init__.register(str)
     def _from_file(self, params, f=None):
         P = SolverParams.get_from_file(filedir=params)
-        self. __init__(P, f)
-        
+        self.__init__(P, f)
+
     def generate(self):
-        
         # Compute the first steps via Backward Euler
         for n in range(self.order):
             self.u[:, n + 1] = self.u[:, n] + self.dt * self.f(self.u[:, n], self.t[n])
-        
+
         # Loop over the remaining time steps
         for k in range(self.num_it - self.order):
             n = self.order + k
