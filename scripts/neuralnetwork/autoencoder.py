@@ -401,7 +401,11 @@ class Autoencoder_identity(Autoencoder):
         metrics=["mae"],
     ):
         super().__init__(
-            latent_dim=None,model_name=model_name, loss=loss, optimizer=optimizer, metrics=metrics
+            latent_dim=None,
+            model_name=model_name,
+            loss=loss,
+            optimizer=optimizer,
+            metrics=metrics,
         )
 
     # Load the model
@@ -422,8 +426,8 @@ class Autoencoder_identity(Autoencoder):
     # Build the identity
     def build_model(self, summary=False):
         # Only layer
-        A = tfkl.Input(shape=(self.input_shape),name="Encoder")
-        E = tfkl.Input(shape=(self.input_shape),name="Decoder")
+        A = tfkl.Input(shape=(self.input_shape), name="Encoder")
+        E = tfkl.Input(shape=(self.input_shape), name="Decoder")
 
         # Build the autoencoder
         self.autoencoder = tfk.Model(inputs=A, outputs=E, name="Autoencoder")

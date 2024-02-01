@@ -17,9 +17,7 @@ def create_dataset(
     remove_samples=True,
 ):
     if generate:
-
-        if model_name=='Fitzhug Nagumo':
-
+        if model_name == "Fitzhug Nagumo":
             FN = FitzhugNagumo(
                 solver_params,
                 k=model_params.k,
@@ -32,10 +30,10 @@ def create_dataset(
 
             FN.generate_dataset(num_samples=num_samples, num_processes=num_processes)
 
-        if model_name == 'Van Der Pol':
-            VDP = VanDerPol(solver_params,model_params)
+        if model_name == "Van Der Pol":
+            VDP = VanDerPol(solver_params, model_params)
 
-            VDP.generate_dataset(num_samples=num_samples,num_processes=num_processes)
+            VDP.generate_dataset(num_samples=num_samples, num_processes=num_processes)
 
     if batch_size is None:
         batch_size = num_samples
@@ -49,7 +47,9 @@ def create_dataset(
     for b in range(num_batches - 1):
         merged = []
         for i in range(batch_size):
-            filename = "../../dataset/samples/sample_" + str(b * batch_size + i) + ".npy"
+            filename = (
+                "../../dataset/samples/sample_" + str(b * batch_size + i) + ".npy"
+            )
             sample = np.load(filename)
             merged.append(sample)
         merged = np.array(merged)
