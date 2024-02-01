@@ -1,9 +1,9 @@
 import numpy as np
 import os
 
-# from scripts.datagen.fitzhugnagumo import FitzhugNagumo
-# from scripts.datagen.vanderpol import VanDerPol
-from scripts.datagen.factory import Model_Factory
+from scripts.datagen.fitzhugnagumo import FitzhugNagumo
+from scripts.datagen.vanderpol import VanDerPol
+
 
 def create_dataset(
     dataset_name,
@@ -17,28 +17,23 @@ def create_dataset(
     remove_samples=True,
 ):
     if generate:
+        if model_name == "Fitzhug Nagumo":
+            FN = FitzhugNagumo(
+                solver_params,
+                k=model_params.k,
+                alpha=model_params.alpha,
+                epsilon=model_params.epsilon,
+                I=model_params.I,
+                gamma=model_params.gamma,
+                grid_size=model_params.grid_size,
+            )
 
-        model = Model_Factory(model_name, solver_params, model_params)
-        model.generate_dataset(num_samples=num_samples, num_processes=num_processes)
-        
-        # if model_name=='Fitzhug Nagumo':
+            FN.generate_dataset(num_samples=num_samples, num_processes=num_processes)
 
-        #     FN = FitzhugNagumo(
-        #         solver_params,
-        #         k=model_params.k,
-        #         alpha=model_params.alpha,
-        #         epsilon=model_params.epsilon,
-        #         I=model_params.I,
-        #         gamma=model_params.gamma,
-        #         grid_size=model_params.grid_size,
-        #     )
+        if model_name == "Van Der Pol":
+            VDP = VanDerPol(solver_params, model_params)
 
-        #     FN.generate_dataset(num_samples=num_samples, num_processes=num_processes)
-
-        # if model_name == 'Van Der Pol':
-        #     VDP = VanDerPol(solver_params,model_params)
-
-        #     VDP.generate_dataset(num_samples=num_samples,num_processes=num_processes)
+            VDP.generate_dataset(num_samples=num_samples, num_processes=num_processes)
 
     if batch_size is None:
         batch_size = num_samples
@@ -52,7 +47,9 @@ def create_dataset(
     for b in range(num_batches - 1):
         merged = []
         for i in range(batch_size):
-            filename = "../../dataset/samples/sample_" + str(b * batch_size + i) + ".npy"
+            filename = (
+                "../../dataset/samples/sample_" + str(b * batch_size + i) + ".npy"
+            )
             sample = np.load(filename)
             merged.append(sample)
         merged = np.array(merged)
