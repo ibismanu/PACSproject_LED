@@ -21,7 +21,7 @@ def create_dataset(
         if model_name=='Fitzhug Nagumo':
 
             FN = FitzhugNagumo(
-                params=solver_params,
+                solver_params,
                 k=model_params.k,
                 alpha=model_params.alpha,
                 epsilon=model_params.epsilon,
