@@ -77,14 +77,19 @@ class LED:
             # Loop over particles
             for x in range(np.shape(decoded_data)[1]):
                 for y in range(np.shape(decoded_data)[2]):
-                    # Compute error as the sum of the errors for each component
-                    err_particle[x,y] = np.sqrt(np.linalg.norm(diff_data[:,x,y,0],ord=2)**2 + \
-                            np.linalg.norm(diff_data[:,x,y,1],ord=2)**2)
+                    
+                    # Compute the error for the current particle
+                    for i in range(np.shape(decoded_data)[-1]):
+                        err_particle[x,y] = err_particle[x,y] + np.linalg.norm(diff_data[:,x,y,0],ord=2)**2
+                    err_particle[x,y] = np.sqrt(err_particle[x,y])
               
             # Loop over snapshots
             for t in range(np.shape(decoded_data)[0]):
-                err_snapshot[t] = np.sqrt(np.linalg.norm(diff_data[t,:,:,0],ord='fro')**2 + \
-                        np.linalg.norm(diff_data[t,:,:,1],ord='fro')**2)
+                
+                # Compute the error for the current time instant
+                for i in range(np.shape(decoded_data)[-1]):
+                    err_snapshot[t] = err_snapshot[t]+np.linalg.norm(diff_data[t,:,:,i],ord='fro')**2
+                err_snapshot[t] = np.sqrt(err_snapshot[t])
                     
             # Compute model error
             err_model = np.sqrt(np.linalg.norm(err_snapshot,ord=2))
@@ -98,8 +103,9 @@ class LED:
             err_model = 0                                           # Model error
             
             # Compute particle error
-            err_particle = np.sqrt(np.linalg.norm(diff_data[:,0],ord=2)**2 + \
-            np.linalg.norm(diff_data[:,1],ord=2)**2)
+            for i in range(np.shape(decoded_data)[-1]):
+                err_particle = err_particle+np.linalg.norm(diff_data[:,0],ord=2)**2
+            err_particle = np.sqrt(err_particle)
                 
             # Loop over snapshots
             for t in range(np.shape(decoded_data)[0]):
