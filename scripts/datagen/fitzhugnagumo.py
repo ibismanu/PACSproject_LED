@@ -1,6 +1,4 @@
 import numpy as np
-import time
-from multiprocessing import Pool
 
 from scripts.datagen.datagen import DataGen
 from scripts.utils.params import SolverParams
@@ -8,10 +6,6 @@ from scripts.particle.thetamethod import ThetaMethod
 from scripts.particle.rungekutta import RKHeun
 from scripts.particle.multistep import AdamsBashforth
 from functools import singledispatchmethod
-
-
-def f_temp(x):
-    return np.array([0])
 
 
 # Generate a dataset of data following the Fitzhug-Nagumo system of equation
@@ -90,17 +84,3 @@ class FitzhugNagumo(DataGen):
                 self.sample[:, i, j] = self.solver.u.transpose()
 
         self.save_sample(name)
-
-    # Create a dataset by generating multiple samples with different firing locations
-    def generate_dataset(self, num_samples, num_processes, x0=None, plot=False):
-        args = [("sample_" + str(i) + ".npy", x0, plot) for i in range(num_samples)]
-
-        start = time.perf_counter()
-
-        # The generation of samples is parallelized
-        with Pool(processes=num_processes) as pool:
-            pool.starmap(self.generate_sample, args)
-
-        finish = time.perf_counter()
-
-        print("Program finished in " + str(finish - start) + " seconds")

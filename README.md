@@ -30,9 +30,20 @@ pip install -r requirements.txt
 
 ## Usage
 To run the code and reproduce the results, navigate the examples folder. Inside you can find 3 sub-folders.
-In each sub-folder you find some Jupyter notebooks, each one referred to the specific example of the folder. To
-well understand the functioning of the code, please read before the entire report.
+In each sub-folder you find some Jupyter notebooks, each one referred to the specific example of the folder.
+
+We underline that each notebook can be run as it is, without modifying anything.
+
 The notebookes are the following:
+* `main`\
+By running this notebook, you can replicate the results concerning the LED network. The file specifies
+3
+the name of the pre-trained autoencoder and recurrent neural network (RNN), and employs the LED
+class to process the data and reproduce the LED mechanism.\
+The user has just to run the entire notebook, or to change the name of the dataset, of the autoencoder
+or of the rnn to be uploaded.\
+First, the object LED is initialized through the names of the pre-trained autoencoder and rnn, and the
+desired length in time of the prediction. Then, the method run allows to run the network. Finally, the method compute_error returns the errors of the prediction.
 * `dataset_creation`\
 This file is designed to guide the reproduction of dataset creation. It provides a step-by-step explanation of the procedure for generating a new dataset.\
 You can either run the notebook as it is or customize it according to your preferences.
@@ -45,35 +56,24 @@ to generate and the number of processors for the parallel execution. The input v
 you to group samples, while the boolean variable remove_samples enables the elimination of samples after
 saving them in a single file. Adjusting batch_size is particularly useful for handling resource-intensive data generation, as in the case of the Fitzhug-Nagumo model.\
 The notebook concludes by visualizing the generated dataset.
-* `main`
-By running this notebook, you can replicate the results concerning the LED network. The file specifies
-3
-the name of the pre-trained autoencoder and recurrent neural network (RNN), and employs the LED
-class to process the data and reproduce the LED mechanism.\
-The user has just to run the entire notebook, or to change the name of the dataset, of the autoencoder
-or of the rnn to be uploaded.\
-First, the object LED is initialized through the names of the pre-trained autoencoder and rnn, and the
-desired length in time of the prediction. Then, the method run allows to run the network.. Finally, the method compute_error is called to compute the error
-of the network using the norm in the specified order (L2 norm by default).
-* `test_autoencoder`
-By running this notebook, you can test separately the autoencoder used in the LED contest (i.e. used in
-the main file). You just need to run the entire notebook.\
-Through the creation of the `Autoencoder` object, by passing the model name to the constructor, the
-pre-trained autoencoder will be automatically uploaded.
-* `test_rnn`
-As the previous function, the aim of this notebook is to test separately the rnn used in the main file for the LED network.
-* `train_autoencoder`
+* `train_autoencoder`\
 You can either run this file without modifying anything, or customize it.\
 The purpose of this notebook is to give the possibility to the user to build and train his own autoencoder.\
 Once the object `Autoencoder` is initialized with the specified parameters (or the default ones), the
 notebook calls the method get_data to prepare the dataset for the training. Moreover, the methods
 build_model and train_model are called to respectively build and train the autoencoder accordingly to
 the specified parameters.
-* `train_rnn`
+* `test_autoencoder`\
+By running this notebook, you can test separately the autoencoder used in the LED context (i.e. used in
+the main file). You just need to run the entire notebook.\
+Through the creation of the `Autoencoder` object, by passing the model name to the constructor, the
+pre-trained autoencoder will be automatically uploaded.
+* `train_rnn`\
 As the previous function, the objective of this notebook is to build and train a recurrent neural network.
 You can either run this file without modifying anything, or customize it.
+* `test_rnn`\
+As the previous function, the aim of this notebook is to test separately the rnn used in the main file for the LED network.
 
-We underline that each notebook can be run as it is, without modifying anything.
 
 If the user wants to create a new example, he has to create a new sub-folder inside the folder examples.
 If he wants to create a dataset for the new example, it is necessary to build a new class that inherits from `DataGen`, since the generation of the dataset is problem-specific.

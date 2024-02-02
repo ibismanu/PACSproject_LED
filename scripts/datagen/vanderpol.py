@@ -1,9 +1,4 @@
-# x' = mu*(x - 1/3 x^3 -y)
-# y' = 1/mu *x
-
 import numpy as np
-import time
-from multiprocessing import Pool
 
 from scripts.datagen.datagen import DataGen
 from scripts.utils.params import SolverParams
@@ -58,16 +53,4 @@ class VanDerPol(DataGen):
         self.sample = self.solver.u.transpose()
         self.save_sample(name)
 
-    # Create a dataset by generating multiple samples with different initial data
-    def generate_dataset(self, num_samples, num_processes, x0=None, plot=False):
-        args = [("sample_" + str(i) + ".npy", x0, plot) for i in range(num_samples)]
-
-        start = time.perf_counter()
-
-        # The generation of samples is parallelizzed
-        with Pool(processes=num_processes) as pool:
-            pool.starmap(self.generate_sample, args)
-
-        finish = time.perf_counter()
-
-        print("Program finished in " + str(finish - start) + " seconds")
+    

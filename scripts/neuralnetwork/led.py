@@ -1,6 +1,3 @@
-# import sys
-# sys.path.append('..\..')
-
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -14,10 +11,11 @@ tfkl = tfk.layers
 
 
 class LED:
-    def __init__(self, autoencoder_name, rnn_name, length_prediction, smooth=True):
+    def __init__(self, length_prediction, rnn_name, autoencoder_name=None, smooth=True):
         # Import Autoencoder
-        self.autoencoder = Autoencoder(latent_dim=None, model_name=autoencoder_name)
-        self.latent_dim = self.autoencoder.encoder.output_shape[-1]
+        if autoencoder_name is not None:
+            self.autoencoder = Autoencoder(latent_dim=None, model_name=autoencoder_name)
+            self.latent_dim = self.autoencoder.encoder.output_shape[-1]
 
         # Import Recurrent Neural Network
         self.rnn = RNN(model_name=rnn_name)
@@ -85,11 +83,11 @@ class LED:
               
             # Loop over snapshots
             for t in range(np.shape(decoded_data)[0]):
-                err_snapshot = np.sqrt(np.linalg.norm(diff_data[t,:,:,0],ord='fro')**2 + \
+                err_snapshot[t] = np.sqrt(np.linalg.norm(diff_data[t,:,:,0],ord='fro')**2 + \
                         np.linalg.norm(diff_data[t,:,:,1],ord='fro')**2)
                     
             # Compute model error
-            err_model = np.sqrt(np.linalg.norm(err_particle,ord='fro'))
+            err_model = np.sqrt(np.linalg.norm(err_snapshot,ord=2))
 
                                 
         elif len(np.shape(self.decoded_future)) == 2:
@@ -108,7 +106,7 @@ class LED:
                 err_snapshot[t] = np.linalg.norm(diff_data[t,:],ord=2)
             
             # Compute model error
-            err_model = err_snapshot
+            err_model = err_particle
 
         return err_particle, err_snapshot, err_model
     

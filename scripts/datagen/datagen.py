@@ -1,4 +1,7 @@
 import numpy as np
+import time
+from multiprocessing import Pool
+
 from abc import ABC, abstractmethod
 
 
@@ -18,3 +21,18 @@ class DataGen(ABC):
             np.savez_compressed("../../dataset/samples/" + name, my_data=self.sample)
         else:
             pass
+
+
+    # Create a dataset by generating multiple samples with different initial data
+    def generate_dataset(self, num_samples, num_processes, x0=None, plot=False):
+        args = [("sample_" + str(i) + ".npy", x0, plot) for i in range(num_samples)]
+
+        start = time.perf_counter()
+
+        # The generation of samples is parallelizzed
+        with Pool(processes=num_processes) as pool:
+            pool.starmap(self.generate_sample, args)
+
+        finish = time.perf_counter()
+
+        print("Program finished in " + str(finish - start) + " seconds")

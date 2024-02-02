@@ -9,12 +9,13 @@ tfk = tf.keras
 tfkl = tfk.layers
 
 
-# Implement an autoencoer:
+# Implement an autoencoder:
 #   - The encoder is composed by a sequence of 2D Convolutional layers
 #       (number of filters and kernel size given by the user), followed by a flattening layer and
 #       dense layers (number of neurons given by user)
 #   - The decoder has a symmetrical structure with respect to the encoder, composed by dense layers
 #       followed by 2D transposed convolutional layers, with the same dimensions as the encoder's
+
 class Autoencoder:
     def __init__(
         self,
@@ -388,62 +389,3 @@ class Autoencoder_asymmetric(Autoencoder):
             validation_split=self.validation_split,
             callbacks=self.callbacks,
         ).history
-
-
-# Implement an autoencoder whichsimply returns the data given in input
-# This will be used in problems with a low dimensionality, where there is no need to encode the data
-class Autoencoder_identity(Autoencoder):
-    def __init__(
-        self,
-        model_name=None,
-        loss=tfk.losses.MeanSquaredError(),
-        optimizer=tfk.optimizers.Adam(),
-        metrics=["mae"],
-    ):
-        super().__init__(
-            latent_dim=None,
-            model_name=model_name,
-            loss=loss,
-            optimizer=optimizer,
-            metrics=metrics,
-        )
-
-    # Load the model
-    def load_model(self, model_name):
-        path = "../../models/" + model_name + "/" + model_name
-
-        with open(path + ".json", "r") as json_file:
-            model_json = json_file.read()
-
-        # Load the autoencoder
-        self.autoencoder = tfk.models.model_from_json(model_json)
-        self.autoencoder.load_weights(path + ".h5")
-
-        # Since the autoencoder is the identity, the encoder and the decoder are so as well
-        self.encoder = self.autoencoder
-        self.decoder = self.autoencoder
-
-    # Build the identity
-    def build_model(self, summary=False):
-        # Only layer
-        A = tfkl.Input(shape=(self.input_shape), name="Encoder")
-        E = tfkl.Input(shape=(self.input_shape), name="Decoder")
-
-        # Build the autoencoder
-        self.autoencoder = tfk.Model(inputs=A, outputs=E, name="Autoencoder")
-
-        # Compile model
-        self.autoencoder.compile(
-            loss=self.loss, optimizer=self.optimizer, metrics=self.metrics
-        )
-
-        # Since the autoencoder is the identity, the encoder and the decoder are so as well
-        self.encoder = self.autoencoder
-        self.decoder = self.autoencoder
-
-        if summary:
-            self.autoencoder.summary(expand_nested=True)
-
-    # Since the autoencoder doesn't require training, doing so results in an error
-    def train_model(self):
-        pass  # raise ValueError("Autoencoder Identity does not support training")
