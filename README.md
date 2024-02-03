@@ -5,10 +5,10 @@ This project is an implementation of the Learning Effective Mechanism (LED) for 
 In the context of multiscale systems, it is crucial to effectively capture
 the system’s dynamics and generate reliable predictions. In this framework, this
 report presents the code structure supporting the implementation of the Learning
-Effective Dynamics (LED) mechanism. The LED relies on surrogate models, em-
-ploying an autoencoder and a Recurrent Neural Network. The code outlined in
-this report guides the user through the dataset generation, advances to the con-
-struction and training of neural networks, and culminates in the reproduction and
+Effective Dynamics (LED) model. The LED relies on surrogate models, employing 
+an autoencoder and a Recurrent Neural Network. The code outlined in
+this report guides the user through the dataset generation, advances to the construction 
+and training of neural networks, and culminates in the reproduction and
 evaluation of the LED. The entire mechanism is tested and evaluated through two
 case studies: the Van Der Pol oscillator and the Fitzhugh-Nagumo model.
 
@@ -36,12 +36,10 @@ We underline that each notebook can be run as it is, without modifying anything.
 
 The notebookes are the following:
 * `main`\
-By running this notebook, you can replicate the results concerning the LED network. The file specifies
-3
-the name of the pre-trained autoencoder and recurrent neural network (RNN), and employs the LED
-class to process the data and reproduce the LED mechanism.\
+By running this notebook, you can replicate the results concerning the LED. The file specifies the name of the pre-trained autoencoder and recurrent neural network, and employs the LED
+class to process the data and reproduce the LED framework.\
 The user has just to run the entire notebook, or to change the name of the dataset, of the autoencoder
-or of the rnn to be uploaded.\
+or of the RNN to be uploaded.\
 First, the object LED is initialized through the names of the pre-trained autoencoder and rnn, and the
 desired length in time of the prediction. Then, the method run allows to run the network. Finally, the method compute_error returns the errors of the prediction.
 * `dataset_creation`\
@@ -77,6 +75,5 @@ As the previous function, the aim of this notebook is to test separately the rnn
 
 If the user wants to create a new example, he has to create a new sub-folder inside the folder examples.
 If he wants to create a dataset for the new example, it is necessary to build a new class that inherits from `DataGen`, since the generation of the dataset is problem-specific.
-Furthermore, a new if instance with the name of the model has to be added inside the create_dataset
-function.
+Furthermore, a new if instance with the name of the model has to be added inside the factory.py file.
 The folder `scripts/particle` contains also the Jupyter notebook `test_particles`. The purpose of this notebook is to test separately the solvers implemented inside `scripts/particle`.
