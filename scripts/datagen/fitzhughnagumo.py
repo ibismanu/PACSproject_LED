@@ -8,9 +8,9 @@ from scripts.particle.multistep import AdamsBashforth
 from functools import singledispatchmethod
 
 
-# Generate a dataset of data following the Fitzhug-Nagumo system of equation
+# Generate a dataset of data following the Fitzhugh-Nagumo system of equation
 # The firing signal is assumed to be propagating radially
-class FitzhugNagumo(DataGen):
+class FitzhughNagumo(DataGen):
     params: SolverParams
 
     @singledispatchmethod

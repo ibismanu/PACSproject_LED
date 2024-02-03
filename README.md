@@ -10,7 +10,7 @@ ploying an autoencoder and a Recurrent Neural Network. The code outlined in
 this report guides the user through the dataset generation, advances to the con-
 struction and training of neural networks, and culminates in the reproduction and
 evaluation of the LED. The entire mechanism is tested and evaluated through two
-case studies: the Van Der Pol oscillator and the Fitzhug-Nagumo model.
+case studies: the Van Der Pol oscillator and the Fitzhugh-Nagumo model.
 
 ## Installation
 
@@ -54,7 +54,7 @@ Moreover, you can specify the dataset’s name and parameters for the specific p
 to the function create_dataset (contained in `scripts/datagen`) you can define the number of samples
 to generate and the number of processors for the parallel execution. The input value batch_size allows
 you to group samples, while the boolean variable remove_samples enables the elimination of samples after
-saving them in a single file. Adjusting batch_size is particularly useful for handling resource-intensive data generation, as in the case of the Fitzhug-Nagumo model.\
+saving them in a single file. Adjusting batch_size is particularly useful for handling resource-intensive data generation, as in the case of the Fitzhugh-Nagumo model.\
 The notebook concludes by visualizing the generated dataset.
 * `train_autoencoder`\
 You can either run this file without modifying anything, or customize it.\
@@ -79,4 +79,4 @@ If the user wants to create a new example, he has to create a new sub-folder ins
 If he wants to create a dataset for the new example, it is necessary to build a new class that inherits from `DataGen`, since the generation of the dataset is problem-specific.
 Furthermore, a new if instance with the name of the model has to be added inside the create_dataset
 function.
-The folder `examples/particles` contains also the Jupyter notebook `particles`. The purpose of this notebook is to test separately the solvers implemented inside `scripts/particle`.
+The folder `scripts/particle` contains also the Jupyter notebook `test_particles`. The purpose of this notebook is to test separately the solvers implemented inside `scripts/particle`.
